@@ -36,8 +36,9 @@
     <div id="sidebar" class="fixed inset-y-0 left-0 bg-slate-800 text-white w-72 transform -translate-x-full transition-transform duration-300 z-30 pt-20 shadow-2xl">
         <div class="flex flex-col p-4 space-y-2">
             <button onclick="cambiarVista('vista_pistoleo')" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition">📦 Consola de Pistoleo</button>
+            <button onclick="cambiarVista('vista_inventario')" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition text-yellow-300">🔍 Buscar Equipos (BD)</button>
             <button onclick="cambiarVista('vista_carga_almacen')" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition">📥 Cargar Data (Almacén)</button>
-            <button onclick="cargarReporteTecnicos()" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition">📱 Reporte Técnicos (WhatsApp)</button>
+            <button onclick="cargarReporteTecnicos()" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition">📱 Reporte Técnicos</button>
             <hr class="border-slate-600 my-2">
             <button onclick="abrirModalAdmin()" class="text-left px-4 py-3 hover:bg-red-600 rounded font-bold text-red-300 transition flex justify-between">
                 <span>⚙️ Admin Claro</span>
@@ -46,23 +47,21 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONTRASEÑA ADMIN (Diseño Profesional) -->
+    <!-- MODAL DE CONTRASEÑA ADMIN -->
     <div id="modal_admin" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex justify-center items-center backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-xl shadow-2xl p-8 w-96 max-w-[90%] transform transition-all border-t-8 border-red-700">
+        <div class="bg-white rounded-xl shadow-2xl p-8 w-96 max-w-[90%] border-t-8 border-red-700">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-2xl font-bold text-gray-800">Acceso Restringido</h3>
                 <button onclick="cerrarModalAdmin()" class="text-gray-400 hover:text-red-500 transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <p class="text-gray-600 text-sm mb-6">Por favor, ingresa la contraseña de administrador para subir reportes de Claro.</p>
-            
-            <input type="password" id="input_pass_admin" class="w-full border-2 border-gray-300 rounded-lg p-3 mb-2 outline-none focus:border-red-600 text-lg text-center tracking-widest font-bold" placeholder="••••••••">
+            <p class="text-gray-600 text-sm mb-6">Contraseña de administrador requerida.</p>
+            <input type="password" id="input_pass_admin" class="w-full border-2 border-gray-300 rounded-lg p-3 mb-2 outline-none focus:border-red-600 text-center tracking-widest font-bold" placeholder="••••••••">
             <p id="error_pass_admin" class="text-red-600 text-sm font-bold hidden mb-4 text-center">❌ Contraseña incorrecta</p>
-            
             <div class="flex gap-3 mt-6">
-                <button onclick="cerrarModalAdmin()" class="w-1/2 px-4 py-3 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold transition">Cancelar</button>
-                <button onclick="validarPasswordAdmin()" class="w-1/2 px-4 py-3 bg-red-700 hover:bg-red-800 text-white rounded-lg font-bold transition shadow-md">Ingresar</button>
+                <button onclick="cerrarModalAdmin()" class="w-1/2 px-4 py-3 bg-gray-100 font-bold rounded-lg">Cancelar</button>
+                <button onclick="validarPasswordAdmin()" class="w-1/2 px-4 py-3 bg-red-700 text-white font-bold rounded-lg">Ingresar</button>
             </div>
         </div>
     </div>
@@ -97,19 +96,58 @@
                     <span id="contador_caja" class="bg-blue-100 text-blue-800 text-xl font-bold px-3 py-1 rounded-full">0</span>
                 </div>
                 <ul id="lista_escaneados" class="space-y-2 flex-grow overflow-y-auto mb-4 border-b pb-4 min-h-[250px]"></ul>
-                
                 <button onclick="cerrarCaja()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-4 rounded shadow-lg cursor-pointer transition text-lg">
                     🖨️ Cerrar Caja e Imprimir
                 </button>
             </div>
         </section>
 
-        <!-- VISTA 2: CARGA ALMACÉN -->
+        <!-- VISTA 2: INVENTARIO Y BÚSQUEDA (NUEVA) -->
+        <section id="vista_inventario" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
+            <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-yellow-500">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">🔍 Buscar Equipos en Base de Datos</h2>
+                </div>
+                
+                <div class="flex gap-4 mb-6">
+                    <input type="text" id="input_busqueda_inv" placeholder="Escribe una Serie, Modelo o Técnico..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-2/3 outline-none focus:border-blue-500">
+                    <select id="filtro_estado_inv" class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/3 outline-none cursor-pointer">
+                        <option value="TODOS">Ver Todos</option>
+                        <option value="ALMACEN">Solo Stock Almacén (Por buscar)</option>
+                        <option value="TECNICO">En poder de Técnico</option>
+                    </select>
+                </div>
+                
+                <button onclick="cargarInventario()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow cursor-pointer mb-6 transition">
+                    Realizar Búsqueda
+                </button>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th class="p-3 border-b-2">Serie / S/N</th>
+                                <th class="p-3 border-b-2">Modelo</th>
+                                <th class="p-3 border-b-2">Técnico Asignado</th>
+                                <th class="p-3 border-b-2">Origen de Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_inventario">
+                            <tr>
+                                <td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar para ver los equipos cargados en el sistema.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-right text-sm text-gray-500 mt-2">Mostrando hasta 500 resultados.</p>
+            </div>
+        </section>
+
+        <!-- VISTA 3: CARGA ALMACÉN -->
         <section id="vista_carga_almacen" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-blue-500">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">📥 Carga de Datos - Almacén</h2>
                 <select id="origen_almacen" class="w-full border-2 p-3 mb-4 font-bold rounded outline-none cursor-pointer">
-                    <!-- NUEVA OPCIÓN AGREGADA AQUÍ -->
                     <option value="SPACECOM_STOCK_ALMACEN">SpaceCom: Stock de Almacén</option>
                     <option value="SPACECOM_STOCK_TECNICO">SpaceCom: Stock de Técnicos</option>
                     <option value="SPACECOM_SOTS">SpaceCom: Historial SOTs</option>
@@ -120,7 +158,7 @@
             </div>
         </section>
 
-        <!-- VISTA 3: REPORTE TÉCNICOS -->
+        <!-- VISTA 4: REPORTE TÉCNICOS -->
         <section id="vista_reporte_tecnicos" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">📱 Equipos Retenidos por Técnico</h2>
@@ -129,7 +167,7 @@
             <div id="contenedor_tecnicos" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </section>
 
-        <!-- VISTA 4: ADMIN CLARO -->
+        <!-- VISTA 5: ADMIN CLARO -->
         <section id="vista_admin" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-red-600">
                 <h2 class="text-2xl font-bold text-red-800 mb-2">⚙️ Panel Administrador: Claro</h2>
@@ -143,16 +181,14 @@
     </div>
 
     <script>
-        // --- 1. CONEXIÓN SUPABASE ---
+        // --- CONEXIÓN SUPABASE ---
         const SUPABASE_URL = 'https://fbxzhasfdvkqunnebkij.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY';
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- 2. MENÚ SANGUCHITO ---
+        // --- MENÚ SANGUCHITO ---
         const sidebar = document.getElementById('sidebar');
-        function toggleMenu() {
-            sidebar.classList.toggle('-translate-x-full');
-        }
+        function toggleMenu() { sidebar.classList.toggle('-translate-x-full'); }
 
         function cambiarVista(idVista) {
             document.querySelectorAll('.vista-seccion').forEach(vista => vista.classList.add('hidden'));
@@ -160,7 +196,7 @@
             sidebar.classList.add('-translate-x-full'); 
         }
 
-        // --- 3. LÓGICA DEL MODAL DE CONTRASEÑA ---
+        // --- MODAL DE CONTRASEÑA ---
         const modalAdmin = document.getElementById('modal_admin');
         const inputPassAdmin = document.getElementById('input_pass_admin');
         const errorPassAdmin = document.getElementById('error_pass_admin');
@@ -173,9 +209,7 @@
             setTimeout(() => inputPassAdmin.focus(), 100); 
         }
 
-        function cerrarModalAdmin() {
-            modalAdmin.classList.add('hidden');
-        }
+        function cerrarModalAdmin() { modalAdmin.classList.add('hidden'); }
 
         function validarPasswordAdmin() {
             if(inputPassAdmin.value === "claro123") {
@@ -187,12 +221,9 @@
                 inputPassAdmin.focus();
             }
         }
+        inputPassAdmin.addEventListener('keypress', (e) => { if (e.key === 'Enter') validarPasswordAdmin(); });
 
-        inputPassAdmin.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') validarPasswordAdmin();
-        });
-
-        // --- 4. CORRELATIVO AUTOMÁTICO DE CAJAS ---
+        // --- CORRELATIVO CAJAS ---
         let numeroCaja = 1;
         const inputCaja = document.getElementById('caja_activa');
         const selectorSede = document.getElementById('sede_selector');
@@ -202,61 +233,44 @@
             const num = String(numeroCaja).padStart(3, '0');
             inputCaja.value = `${prefijo}-${num}`;
         }
-
         selectorSede.addEventListener('change', actualizarNombreCaja);
         actualizarNombreCaja(); 
 
-        // --- 5. FUNCIÓN CERRAR CAJA ---
         let equiposEnCaja = 0;
-        
         function cerrarCaja() {
-            if (equiposEnCaja === 0) {
-                alert("No puedes cerrar una caja vacía. Pistolea al menos un equipo primero.");
-                return;
-            }
-            alert(`✅ La caja ${inputCaja.value} ha sido cerrada correctamente y está lista para despacho.`);
-            
+            if (equiposEnCaja === 0) { alert("No puedes cerrar una caja vacía."); return; }
+            alert(`✅ La caja ${inputCaja.value} ha sido cerrada.`);
             document.getElementById('lista_escaneados').innerHTML = '';
             equiposEnCaja = 0;
             document.getElementById('contador_caja').innerText = '0';
-            
             numeroCaja++;
             actualizarNombreCaja();
             document.getElementById('input_laser').focus();
         }
 
-        // --- 6. FOCUS LOCK INTELIGENTE ---
+        // --- FOCUS LOCK ---
         document.getElementById('vista_pistoleo').addEventListener('click', (e) => {
             if (!modalAdmin.classList.contains('hidden')) return;
-
             const tag = e.target.tagName;
             if (tag !== 'BUTTON' && tag !== 'SELECT' && tag !== 'INPUT') {
                 document.getElementById('input_laser').focus();
             }
         });
 
-        // --- 7. EFECTOS DE SONIDO ---
+        // --- SONIDOS ---
         const playSound = (type) => {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.connect(gain); gain.connect(ctx.destination);
-                if(type === 'success') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.15);
-                } else {
-                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start(); osc.stop(ctx.currentTime + 0.3);
-                }
-            } catch(err) { console.log("Audio bloqueado"); }
+                if(type === 'success') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.15); }
+                else { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, ctx.currentTime); gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.3); }
+            } catch(err) {}
         };
 
-        // --- 8. LÓGICA DE PISTOLEO ---
+        // --- LÓGICA PISTOLEO ---
         const inputLaser = document.getElementById('input_laser');
-
         inputLaser.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -281,19 +295,14 @@
                 }
 
                 const sedeSeleccionada = selectorSede.value;
-                const { error: insertError } = await db.from('equipos_escaneados').insert([{ 
-                    serie: seriePistoleada, 
-                    sede: sedeSeleccionada
-                }]);
+                const { error: insertError } = await db.from('equipos_escaneados').insert([{ serie: seriePistoleada, sede: sedeSeleccionada }]);
 
                 if (insertError) {
-                    playSound('error'); 
-                    alert(`ERROR: ${insertError.message}`);
+                    playSound('error'); alert(`ERROR: ${insertError.message}`);
                 } else {
                     playSound('success'); 
                     equiposEnCaja++;
                     document.getElementById('contador_caja').innerText = equiposEnCaja;
-                    
                     const li = document.createElement('li');
                     li.className = 'text-sm font-mono bg-gray-50 p-2 rounded border flex justify-between';
                     li.innerHTML = `<span class="text-green-600 font-bold">✓ ${seriePistoleada}</span>`;
@@ -302,7 +311,7 @@
             }
         });
 
-        // --- 9. SUBIDA MASIVA DE EXCEL ---
+        // --- SUBIDA DE EXCEL ---
         async function procesarExcel(inputId, origenVal, btnId, msgId) {
             const fileInput = document.getElementById(inputId);
             const msgLabel = document.getElementById(msgId);
@@ -338,15 +347,68 @@
             reader.readAsArrayBuffer(file);
         }
 
-        document.getElementById('btn_subir_almacen').addEventListener('click', () => {
-            procesarExcel('input_excel_almacen', document.getElementById('origen_almacen').value, 'btn_subir_almacen', 'msg_almacen');
+        document.getElementById('btn_subir_almacen').addEventListener('click', () => { procesarExcel('input_excel_almacen', document.getElementById('origen_almacen').value, 'btn_subir_almacen', 'msg_almacen'); });
+        document.getElementById('btn_subir_admin').addEventListener('click', () => { procesarExcel('input_excel_admin', 'CLARO_ANTIGUAMIENTO', 'btn_subir_admin', 'msg_admin'); });
+
+        // --- LÓGICA DE BÚSQUEDA / INVENTARIO ---
+        async function cargarInventario() {
+            const termino = document.getElementById('input_busqueda_inv').value.trim().toUpperCase();
+            const filtro = document.getElementById('filtro_estado_inv').value;
+            const tbody = document.getElementById('tbody_inventario');
+            
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-blue-600 font-bold">Cargando base de datos...</td></tr>';
+
+            // Construir la consulta a Supabase
+            let query = db.from('cruce_spacecom').select('*').limit(500);
+
+            // Filtro por texto
+            if (termino) {
+                query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,modelo.ilike.%${termino}%`);
+            }
+
+            // Filtro por estado (Almacén vs Técnico)
+            if (filtro === 'ALMACEN') {
+                query = query.or('tecnico_asignado.is.null,tecnico_asignado.eq.');
+            } else if (filtro === 'TECNICO') {
+                query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-red-500">Error: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-gray-500">No se encontraron equipos con ese criterio.</td></tr>';
+                return;
+            }
+
+            // Dibujar la tabla
+            tbody.innerHTML = '';
+            data.forEach(eq => {
+                const esAlmacen = !eq.tecnico_asignado || eq.tecnico_asignado.trim() === '';
+                const textoTecnico = esAlmacen ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN</span>' : eq.tecnico_asignado;
+                
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="p-3 font-mono font-bold text-gray-800">${eq.serie}</td>
+                    <td class="p-3 text-gray-600 text-sm">${eq.modelo || '-'}</td>
+                    <td class="p-3">${textoTecnico}</td>
+                    <td class="p-3 text-xs text-gray-400">${eq.origen_reporte || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Permite presionar Enter en el buscador de inventario
+        document.getElementById('input_busqueda_inv').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') cargarInventario();
         });
 
-        document.getElementById('btn_subir_admin').addEventListener('click', () => {
-            procesarExcel('input_excel_admin', 'CLARO_ANTIGUAMIENTO', 'btn_subir_admin', 'msg_admin');
-        });
-
-        // --- 10. REPORTE PARA WHATSAPP ---
+        // --- REPORTE TÉCNICOS ---
         async function cargarReporteTecnicos() {
             cambiarVista('vista_reporte_tecnicos');
             const contenedor = document.getElementById('contenedor_tecnicos');
@@ -367,7 +429,6 @@
             for (const [tecnico, equipos] of Object.entries(agrupado)) {
                 const cardId = 'card_' + tecnico.replace(/[^a-zA-Z0-9]/g, '');
                 let htmlEquipos = equipos.map(eq => `<div class="flex justify-between border-b py-1"><span class="font-mono text-sm font-bold text-gray-800">${eq.serie}</span><span class="text-xs text-gray-500">${eq.modelo || '-'}</span></div>`).join('');
-                
                 contenedor.innerHTML += `
                     <div class="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col">
                         <div id="${cardId}" class="p-4 bg-white">
@@ -379,9 +440,7 @@
                             <p class="text-center text-xs text-gray-400 mt-2 border-t pt-2">Devolver a almacén</p>
                         </div>
                         <div class="bg-gray-50 p-3 border-t">
-                            <button onclick="copiarComoImagen('${cardId}')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded shadow cursor-pointer">
-                                📸 Copiar para WhatsApp
-                            </button>
+                            <button onclick="copiarComoImagen('${cardId}')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded shadow cursor-pointer">📸 Copiar para WhatsApp</button>
                         </div>
                     </div>`;
             }
@@ -390,10 +449,7 @@
         async function copiarComoImagen(elementId) {
             try {
                 const canvas = await html2canvas(document.getElementById(elementId), { scale: 2 }); 
-                canvas.toBlob(async (blob) => {
-                    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-                    alert("¡Imagen copiada! Ve a WhatsApp y presiona Pegar (Ctrl+V)");
-                });
+                canvas.toBlob(async (blob) => { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); alert("¡Imagen copiada! Ve a WhatsApp y presiona Pegar (Ctrl+V)"); });
             } catch (err) { alert("Error al copiar imagen. Intenta de nuevo."); }
         }
     </script>
