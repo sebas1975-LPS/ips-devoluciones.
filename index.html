@@ -284,7 +284,7 @@
                 resDiv.className = 'mt-4 p-4 rounded-lg border-l-4 shadow-sm block bg-green-50 border-green-500';
                 document.getElementById('res_serie').innerText = `Serie: ${serie} ${equipoDB.dias_antiguedad ? '('+equipoDB.dias_antiguedad+' Días)' : ''}`;
                 
-                let ubicacion = "FALTA BUSCAR EN ESTANTE";
+                let ubicacion = "FALTA BUSCAR";
                 if(equipoDB.tecnico_asignado) ubicacion = `Técnico: ${equipoDB.tecnico_asignado}`;
                 else if(equipoDB.sot_instalacion) ubicacion = `SOT: ${equipoDB.sot_instalacion}`;
                 document.getElementById('res_ubicacion').innerText = `Ubicación: ${ubicacion}`;
@@ -307,7 +307,7 @@
             if (error || !data || data.length === 0) return alert(`No hay datos registrados para ${sedeActual}.`);
 
             const datosParaExcel = data.map(eq => {
-                let ubicacion = "FALTA BUSCAR EN ESTANTE";
+                let ubicacion = "FALTA BUSCAR";
                 if(eq.tecnico_asignado) ubicacion = `TÉCNICO: ${eq.tecnico_asignado}`;
                 else if(eq.sot_instalacion) ubicacion = `SOT: ${eq.sot_instalacion}`;
 
@@ -448,7 +448,7 @@
 
             tbody.innerHTML = '';
             data.forEach(eq => {
-                let ubicacion = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR EN ESTANTE</span>';
+                let ubicacion = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR</span>';
                 if (eq.tecnico_asignado) ubicacion = `<span class="font-bold text-gray-700">Técnico: </span>${eq.tecnico_asignado}`;
                 else if (eq.sot_instalacion) ubicacion = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">SOT: ${eq.sot_instalacion}</span>`;
 
