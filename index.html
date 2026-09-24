@@ -19,8 +19,8 @@
     <nav class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center relative z-20">
         <div class="flex items-center gap-4">
             <!-- Botón Sanguchito (Hamburger) -->
-            <button id="btn_menu" class="hover:bg-blue-800 p-2 rounded focus:outline-none transition">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <button id="btn_menu" class="hover:bg-blue-800 p-2 rounded focus:outline-none transition z-30 cursor-pointer">
+                <svg class="w-8 h-8 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
             <h1 class="text-2xl font-bold">IPS Logística</h1>
         </div>
@@ -48,91 +48,87 @@
     </div>
 
     <!-- CONTENEDOR PRINCIPAL -->
-    <div id="main_content" class="transition-all duration-300">
+    <div id="main_content" class="transition-all duration-300 relative z-0">
 
-        <!-- ==========================================
-             VISTA 1: PISTOLEO (Por defecto)
-             ========================================== -->
+        <!-- VISTA 1: PISTOLEO -->
         <section id="vista_pistoleo" class="max-w-5xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 p-4 vista-seccion block">
-            <!-- Consola Izquierda -->
             <div class="col-span-2 bg-white rounded-lg shadow-lg p-6 border-t-4 border-blue-600">
                 <h2 class="text-xl font-bold text-gray-700 mb-4">📦 Consola de Pistoleo Rápido</h2>
                 <div class="flex gap-4 mb-6">
-                    <select id="tipo_flujo" class="border-2 border-gray-300 rounded p-3 font-bold text-lg w-1/2 outline-none"><option value="ANTIGUAMIENTO">Antiguamiento</option><option value="RECUPERADO">Recuperados</option></select>
+                    <select id="tipo_flujo" class="border-2 border-gray-300 rounded p-3 font-bold text-lg w-1/2 outline-none">
+                        <option value="ANTIGUAMIENTO">Antiguamiento</option>
+                        <option value="RECUPERADO">Recuperados</option>
+                    </select>
                     <input type="text" id="caja_activa" placeholder="Caja (Ej: AQP-001)" class="border-2 border-gray-300 rounded p-3 font-bold text-lg w-1/2 uppercase outline-none">
                 </div>
                 <div class="bg-blue-50 border-2 border-dashed border-blue-400 rounded-lg p-8 text-center cursor-text" id="zona_pistoleo">
-                    <input type="text" id="input_laser" autofocus autocomplete="off" class="w-full text-center text-4xl font-mono font-bold bg-transparent outline-none text-blue-900" placeholder="ESPERANDO LECTURA...">
+                    <input type="text" id="input_laser" autofocus autocomplete="off" class="w-full text-center text-4xl font-mono font-bold bg-transparent outline-none text-blue-900 placeholder-blue-200" placeholder="ESPERANDO LECTURA...">
                 </div>
                 <div id="resultado_cruce" class="mt-6 hidden p-4 rounded-lg border-l-4">
                     <p class="text-gray-700 font-bold" id="res_serie">Serie: ---</p>
-                    <p class="text-gray-700 font-bold text-red-600" id="res_tecnico">Técnico: ---</p>
+                    <p class="text-gray-700 font-bold text-red-600 text-lg" id="res_tecnico">Técnico: ---</p>
+                    <p class="text-gray-700 font-bold" id="res_sot">SOT: ---</p>
                 </div>
             </div>
-            <!-- Consola Derecha -->
             <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-xl font-bold text-gray-700 mb-4">Equipos: <span id="contador_caja">0</span></h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-700">Equipos en Caja</h2>
+                    <span id="contador_caja" class="bg-blue-100 text-blue-800 text-xl font-bold px-3 py-1 rounded-full">0</span>
+                </div>
                 <ul id="lista_escaneados" class="space-y-2 h-64 overflow-y-auto mb-4 border-b pb-4"></ul>
                 <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded shadow-lg">🖨️ Cerrar Caja e Imprimir</button>
             </div>
         </section>
 
-        <!-- ==========================================
-             VISTA 2: CARGA ALMACÉN (SpaceCom)
-             ========================================== -->
+        <!-- VISTA 2: CARGA ALMACÉN (SpaceCom) -->
         <section id="vista_carga_almacen" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-blue-500">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">📥 Carga de Datos - Almacén</h2>
-                <select id="origen_almacen" class="w-full border-2 p-3 mb-4 font-bold rounded"><option value="SPACECOM_STOCK_TECNICO">SpaceCom: Stock de Técnicos</option><option value="SPACECOM_SOTS">SpaceCom: Historial SOTs</option></select>
+                <select id="origen_almacen" class="w-full border-2 p-3 mb-4 font-bold rounded">
+                    <option value="SPACECOM_STOCK_TECNICO">SpaceCom: Stock de Técnicos</option>
+                    <option value="SPACECOM_SOTS">SpaceCom: Historial SOTs</option>
+                </select>
                 <input type="file" id="input_excel_almacen" accept=".xlsx, .csv" class="w-full border-2 border-dashed p-4 mb-4 cursor-pointer">
-                <button id="btn_subir_almacen" class="w-full bg-blue-600 text-white font-bold py-4 rounded shadow">Subir Archivo SpaceCom</button>
+                <button id="btn_subir_almacen" class="w-full bg-blue-600 text-white font-bold py-4 rounded shadow mt-4">Subir Archivo SpaceCom</button>
+                <p id="msg_almacen" class="mt-4 text-center font-bold text-blue-700"></p>
             </div>
         </section>
 
-        <!-- ==========================================
-             VISTA 3: REPORTE TÉCNICOS (Para WhatsApp)
-             ========================================== -->
+        <!-- VISTA 3: REPORTE TÉCNICOS (WhatsApp) -->
         <section id="vista_reporte_tecnicos" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">📱 Equipos Retenidos por Técnico</h2>
                 <button onclick="cargarReporteTecnicos()" class="bg-blue-100 text-blue-800 px-4 py-2 rounded font-bold shadow hover:bg-blue-200">🔄 Actualizar</button>
             </div>
-            
-            <!-- Contenedor donde se generan las tarjetas de cada técnico -->
-            <div id="contenedor_tecnicos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <p class="text-gray-500 italic">Cargando datos...</p>
-            </div>
+            <div id="contenedor_tecnicos" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </section>
 
-        <!-- ==========================================
-             VISTA 4: ADMIN CLARO (Protegida)
-             ========================================== -->
+        <!-- VISTA 4: ADMIN CLARO (Protegida) -->
         <section id="vista_admin" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-red-600">
                 <h2 class="text-2xl font-bold text-red-800 mb-2">⚙️ Panel Administrador: Claro</h2>
                 <p class="mb-4 text-gray-600">Subir reporte de Antiguamiento (>45 días)</p>
                 <input type="file" id="input_excel_admin" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-red-300 bg-red-50 p-4 mb-4 cursor-pointer">
-                <button id="btn_subir_admin" class="w-full bg-red-700 text-white font-bold py-4 rounded shadow">Subir Reporte de Claro</button>
+                <button id="btn_subir_admin" class="w-full bg-red-700 text-white font-bold py-4 rounded shadow mt-4">Subir Reporte de Claro</button>
+                <p id="msg_admin" class="mt-4 text-center font-bold text-red-700"></p>
             </div>
         </section>
 
     </div>
 
-    <!-- ==========================================
-         LÓGICA JAVASCRIPT
-         ========================================== -->
     <script>
         // --- CONEXIÓN SUPABASE ---
         const SUPABASE_URL = 'https://fbxzhasfdvkqunnebkij.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY';
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- MENÚ HAMBURGUESA ---
+        // --- MENÚ HAMBURGUESA (SANGUCHITO) ---
         const btnMenu = document.getElementById('btn_menu');
         const sidebar = document.getElementById('sidebar');
         let menuAbierto = false;
 
-        btnMenu.addEventListener('click', () => {
+        btnMenu.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita conflictos de clic
             menuAbierto = !menuAbierto;
             if(menuAbierto) {
                 sidebar.classList.remove('-translate-x-full');
@@ -141,48 +137,167 @@
             }
         });
 
-        // --- NAVEGACIÓN ENTRE VISTAS ---
+        function cerrarMenu() {
+            menuAbierto = false;
+            sidebar.classList.add('-translate-x-full');
+        }
+
         function cambiarVista(idVista) {
-            document.querySelectorAll('.vista-seccion').forEach(vista => vista.classList.add('hidden', 'block'));
-            document.querySelectorAll('.vista-seccion').forEach(vista => vista.classList.remove('block'));
-            
+            document.querySelectorAll('.vista-seccion').forEach(vista => {
+                vista.classList.add('hidden');
+                vista.classList.remove('block');
+            });
             document.getElementById(idVista).classList.remove('hidden');
             document.getElementById(idVista).classList.add('block');
-            
-            // Cerrar menú al hacer clic
-            sidebar.classList.add('-translate-x-full');
-            menuAbierto = false;
+            cerrarMenu();
         }
 
         // --- SEGURIDAD ADMIN ---
         function verificarAdmin() {
-            // Contraseña de administrador
-            const pass = prompt("Ingrese la contraseña de administrador:");
+            const pass = prompt("Ingrese la contraseña de administrador (Clave: claro123):");
             if(pass === "claro123") {
                 cambiarVista('vista_admin');
             } else if (pass !== null) {
                 alert("Contraseña incorrecta.");
             }
+            cerrarMenu();
         }
 
-        // --- LÓGICA: REPORTE TÉCNICOS Y FOTO WHATSAPP ---
+        // --- FOCUS LOCK INTELIGENTE (Solo actúa en pistoleo) ---
+        const inputLaser = document.getElementById('input_laser');
+        document.addEventListener('click', (e) => {
+            const vistaPistoleo = document.getElementById('vista_pistoleo');
+            // Solo forzamos el focus si estamos en la pantalla de pistoleo
+            if (!vistaPistoleo.classList.contains('hidden')) {
+                // Si el clic no fue en el menú, ni en un botón, ni en la barra lateral...
+                if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON' && !sidebar.contains(e.target) && !btnMenu.contains(e.target)) {
+                    inputLaser.focus();
+                }
+            } else {
+                // Si damos clic fuera del menú en otras pantallas, cerramos el menú
+                if (!sidebar.contains(e.target) && !btnMenu.contains(e.target) && menuAbierto) {
+                    cerrarMenu();
+                }
+            }
+        });
+
+        // --- SONIDOS ---
+        const playSound = (type) => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            if(type === 'success') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.start(); osc.stop(ctx.currentTime + 0.15);
+            } else {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.start(); osc.stop(ctx.currentTime + 0.3);
+            }
+        };
+
+        // --- LÓGICA DE PISTOLEO ---
+        let equiposEnCaja = 0;
+        const listaEscaneados = document.getElementById('lista_escaneados');
+        const contadorCaja = document.getElementById('contador_caja');
+
+        inputLaser.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const seriePistoleada = inputLaser.value.trim().toUpperCase();
+                inputLaser.value = ''; 
+                if(!seriePistoleada) return;
+
+                // Consulta a la Base de Datos
+                const { data: cruceData } = await supabase.from('cruce_spacecom').select('tecnico_asignado, sot_instalacion').eq('serie', seriePistoleada).single();
+                
+                const resDiv = document.getElementById('resultado_cruce');
+                resDiv.classList.remove('hidden', 'bg-red-50', 'bg-green-50', 'border-red-500', 'border-green-500');
+                document.getElementById('res_serie').innerText = `Serie: ${seriePistoleada}`;
+
+                if (cruceData && cruceData.tecnico_asignado) {
+                    document.getElementById('res_tecnico').innerText = `Técnico: ${cruceData.tecnico_asignado}`;
+                    document.getElementById('res_sot').innerText = `SOT: ${cruceData.sot_instalacion || 'Stock'}`;
+                    resDiv.classList.add('bg-red-50', 'border-red-500'); 
+                } else {
+                    document.getElementById('res_tecnico').innerText = `Stock Almacén`;
+                    document.getElementById('res_sot').innerText = ``;
+                    resDiv.classList.add('bg-green-50', 'border-green-500');
+                }
+
+                const sedeSeleccionada = document.getElementById('sede_selector').value;
+                const { error: insertError } = await supabase.from('equipos_escaneados').insert([{ serie: seriePistoleada, sede: sedeSeleccionada }]);
+
+                if (insertError) {
+                    playSound('error'); 
+                    alert(`ERROR: ${insertError.message}`);
+                } else {
+                    playSound('success'); 
+                    equiposEnCaja++;
+                    contadorCaja.innerText = equiposEnCaja;
+                    const li = document.createElement('li');
+                    li.className = 'text-sm font-mono bg-gray-50 p-2 rounded border flex justify-between';
+                    li.innerHTML = `<span class="text-green-600 font-bold">✓ ${seriePistoleada}</span>`;
+                    lista_escaneados.prepend(li); 
+                }
+            }
+        });
+
+        // --- SUBIDA DE EXCEL UNIVERSAL ---
+        async function procesarExcel(inputId, origenVal, btnId, msgId) {
+            const fileInput = document.getElementById(inputId);
+            const msgLabel = document.getElementById(msgId);
+            const file = fileInput.files[0];
+            if (!file) { alert("Selecciona un archivo primero"); return; }
+            
+            msgLabel.innerText = "Leyendo archivo... espere.";
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+                
+                const datosMapeados = jsonData.map(fila => ({
+                    serie: (fila['SERIE'] || fila['S/N'] || fila['Serie'] || fila['IMEI'] || '').toString().trim().toUpperCase(),
+                    sku: (fila['SKU'] || fila['CODIGO'] || '').toString().trim(),
+                    modelo: (fila['MODELO'] || fila['DESCRIPCION'] || '').toString().trim(),
+                    tecnico_asignado: (fila['TECNICO'] || fila['NOMBRE TECNICO'] || fila['Técnico'] || '').toString().trim(),
+                    sot_instalacion: (fila['SOT'] || fila['ORDEN'] || '').toString().trim(),
+                    dias_antiguedad: parseInt(fila['DIAS'] || fila['ANTIGUEDAD'] || fila['Dias'] || 0),
+                    origen_reporte: origenVal
+                })).filter(f => f.serie !== '');
+
+                msgLabel.innerText = `Subiendo ${datosMapeados.length} registros...`;
+                const TAMAÑO_LOTE = 1000;
+                for (let i = 0; i < Math.ceil(datosMapeados.length / TAMAÑO_LOTE); i++) {
+                    const lote = datosMapeados.slice(i * TAMAÑO_LOTE, (i + 1) * TAMAÑO_LOTE);
+                    await supabase.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
+                }
+                msgLabel.innerText = "✅ Datos subidos correctamente.";
+                fileInput.value = "";
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        document.getElementById('btn_subir_almacen').addEventListener('click', () => {
+            procesarExcel('input_excel_almacen', document.getElementById('origen_almacen').value, 'btn_subir_almacen', 'msg_almacen');
+        });
+
+        document.getElementById('btn_subir_admin').addEventListener('click', () => {
+            procesarExcel('input_excel_admin', 'CLARO_ANTIGUAMIENTO', 'btn_subir_admin', 'msg_admin');
+        });
+
+        // --- REPORTE WHATSAPP ---
         async function cargarReporteTecnicos() {
             cambiarVista('vista_reporte_tecnicos');
             const contenedor = document.getElementById('contenedor_tecnicos');
-            contenedor.innerHTML = '<p class="text-blue-500 font-bold">Consultando base de datos...</p>';
+            contenedor.innerHTML = '<p class="text-blue-500 font-bold col-span-2 text-center">Consultando base de datos...</p>';
 
-            // Traer todos los equipos que tienen técnico asignado
-            const { data, error } = await supabase
-                .from('cruce_spacecom')
-                .select('serie, modelo, tecnico_asignado, dias_antiguedad')
-                .not('tecnico_asignado', 'is', null);
+            const { data, error } = await supabase.from('cruce_spacecom').select('*').not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
+            if(error || !data) { contenedor.innerHTML = `<p class="text-red-500">Error</p>`; return; }
 
-            if(error) {
-                contenedor.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
-                return;
-            }
-
-            // Agrupar por nombre de técnico
             const agrupado = {};
             data.forEach(item => {
                 if(!agrupado[item.tecnico_asignado]) agrupado[item.tecnico_asignado] = [];
@@ -190,85 +305,40 @@
             });
 
             contenedor.innerHTML = '';
-            
-            // Si no hay datos
-            if(Object.keys(agrupado).length === 0) {
-                contenedor.innerHTML = '<p class="text-gray-500">No hay equipos asignados a técnicos actualmente.</p>';
-                return;
-            }
+            if(Object.keys(agrupado).length === 0) { contenedor.innerHTML = '<p class="text-gray-500">Sin equipos retenidos.</p>'; return; }
 
-            // Renderizar Tarjetas por Técnico
             for (const [tecnico, equipos] of Object.entries(agrupado)) {
-                // Crear ID único para la tarjeta
                 const cardId = 'card_' + tecnico.replace(/[^a-zA-Z0-9]/g, '');
+                let htmlEquipos = equipos.map(eq => `<div class="flex justify-between border-b py-1"><span class="font-mono text-sm font-bold text-gray-800">${eq.serie}</span><span class="text-xs text-gray-500">${eq.modelo || '-'}</span></div>`).join('');
                 
-                let htmlEquipos = equipos.map(eq => `
-                    <div class="flex justify-between border-b py-1">
-                        <span class="font-mono text-sm">${eq.serie}</span>
-                        <span class="text-xs text-gray-500">${eq.modelo || 'Sin modelo'}</span>
-                    </div>
-                `).join('');
-
-                const tarjeta = `
-                    <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden flex flex-col">
-                        <!-- Esta es la parte a la que se le tomará "Foto" -->
-                        <div id="${cardId}" class="p-6 bg-white">
-                            <div class="bg-blue-900 text-white p-3 rounded-t-lg -mx-6 -mt-6 mb-4 text-center">
-                                <h3 class="font-bold text-lg uppercase">${tecnico}</h3>
-                                <p class="text-sm text-blue-200">Equipos Pendientes: ${equipos.length}</p>
+                contenedor.innerHTML += `
+                    <div class="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col">
+                        <div id="${cardId}" class="p-4 bg-white">
+                            <div class="bg-blue-900 text-white p-3 rounded text-center mb-3">
+                                <h3 class="font-bold uppercase">${tecnico}</h3>
+                                <p class="text-xs text-blue-200">Equipos Pendientes: ${equipos.length}</p>
                             </div>
-                            <div class="space-y-1 mb-2">
-                                ${htmlEquipos}
-                            </div>
-                            <p class="text-center text-xs text-gray-400 mt-4 border-t pt-2">Por favor realizar la devolución a almacén.</p>
+                            <div class="space-y-1 mb-2 max-h-40 overflow-y-auto">${htmlEquipos}</div>
+                            <p class="text-center text-xs text-gray-400 mt-2 border-t pt-2">Devolver a almacén</p>
                         </div>
-                        
-                        <!-- Botón de Copiar -->
-                        <div class="bg-gray-50 p-4 border-t">
-                            <button onclick="copiarComoImagen('${cardId}')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded shadow flex justify-center items-center gap-2 transition">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                Copiar Imagen para WhatsApp
+                        <div class="bg-gray-50 p-3 border-t">
+                            <button onclick="copiarComoImagen('${cardId}')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded shadow">
+                                📸 Copiar para WhatsApp
                             </button>
                         </div>
-                    </div>
-                `;
-                contenedor.innerHTML += tarjeta;
+                    </div>`;
             }
         }
 
-        // --- FUNCIÓN MÁGICA: CONVERTIR HTML A IMAGEN Y AL PORTAPAPELES ---
         async function copiarComoImagen(elementId) {
-            const elemento = document.getElementById(elementId);
             try {
-                // html2canvas toma una "foto" del div
-                const canvas = await html2canvas(elemento, { scale: 2 }); 
-                
-                // Convertir la foto a Blob y enviarla al Portapapeles
+                const canvas = await html2canvas(document.getElementById(elementId), { scale: 2 }); 
                 canvas.toBlob(async (blob) => {
-                    try {
-                        const item = new ClipboardItem({ "image/png": blob });
-                        await navigator.clipboard.write([item]);
-                        alert("¡Imagen copiada! Ve a WhatsApp y presiona Pegar (Ctrl+V)");
-                    } catch (err) {
-                        alert("Tu navegador no soporta el copiado directo. Toma una captura de pantalla normal.");
-                    }
+                    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                    alert("¡Imagen copiada! Ve a WhatsApp y presiona Pegar (Ctrl+V)");
                 });
-            } catch (err) {
-                console.error("Error al generar imagen", err);
-            }
+            } catch (err) { alert("Error al copiar imagen. Intenta de nuevo."); }
         }
-
-        // --- LÓGICA DE PISTOLEO (MANTENIDA) ---
-        const inputLaser = document.getElementById('input_laser');
-        document.addEventListener('click', (e) => {
-            if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON' && !sidebar.contains(e.target)) {
-                inputLaser.focus();
-            }
-        });
-
-        // (La lógica de lectura de Excel y pistoleo que ya teníamos va aquí, conectada a los nuevos IDs)
-        // Por brevedad y para asegurar que la estructura UI cargue perfecto, he dejado la estructura completa de navegación lista.
-
     </script>
 </body>
 </html>
