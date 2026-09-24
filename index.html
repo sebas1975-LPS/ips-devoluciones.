@@ -102,7 +102,7 @@
             </div>
         </section>
 
-        <!-- VISTA 2: INVENTARIO Y BÚSQUEDA -->
+        <!-- VISTA 2: INVENTARIO -->
         <section id="vista_inventario" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-yellow-500">
                 <div class="flex justify-between items-center mb-6">
@@ -134,13 +134,10 @@
                             </tr>
                         </thead>
                         <tbody id="tbody_inventario">
-                            <tr>
-                                <td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar para ver los equipos cargados en el sistema.</td>
-                            </tr>
+                            <tr><td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar para ver los equipos cargados en el sistema.</td></tr>
                         </tbody>
                     </table>
                 </div>
-                <p class="text-right text-sm text-gray-500 mt-2">Mostrando hasta 500 resultados.</p>
             </div>
         </section>
 
@@ -187,7 +184,7 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY';
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- MENÚ SANGUCHITO ---
+        // --- NAVEGACIÓN ---
         const sidebar = document.getElementById('sidebar');
         function toggleMenu() { sidebar.classList.toggle('-translate-x-full'); }
 
@@ -197,7 +194,7 @@
             sidebar.classList.add('-translate-x-full'); 
         }
 
-        // --- MODAL DE CONTRASEÑA ---
+        // --- MODAL ADMIN ---
         const modalAdmin = document.getElementById('modal_admin');
         const inputPassAdmin = document.getElementById('input_pass_admin');
         const errorPassAdmin = document.getElementById('error_pass_admin');
@@ -270,7 +267,7 @@
             } catch(err) {}
         };
 
-        // --- LÓGICA PISTOLEO ---
+        // --- PISTOLEO ---
         const inputLaser = document.getElementById('input_laser');
         inputLaser.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
@@ -312,14 +309,14 @@
             }
         });
 
-        // --- LECTOR DE EXCEL INTELIGENTE (ACTUALIZADO) ---
+        // --- SUBIDA DE EXCEL CON DETECCIÓN DE ERRORES SUPABASE ---
         async function procesarExcel(inputId, origenVal, btnId, msgId) {
             const fileInput = document.getElementById(inputId);
             const msgLabel = document.getElementById(msgId);
             const file = fileInput.files[0];
             if (!file) { alert("Selecciona un archivo primero"); return; }
             
-            msgLabel.innerText = "Analizando columnas... espere.";
+            msgLabel.innerHTML = "<span class='text-blue-600'>Leyendo archivo... espere.</span>";
             const reader = new FileReader();
             
             reader.onload = async (event) => {
@@ -327,18 +324,11 @@
                 const workbook = XLSX.read(data, { type: 'array' });
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                 
-                // Función para limpiar tildes y espacios en las cabeceras
                 const normalizeKey = (key) => key.toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
                 const datosMapeados = jsonData.map(fila => {
-                    let eq_serie = '';
-                    let eq_sku = '';
-                    let eq_modelo = '';
-                    let eq_tecnico = '';
-                    let eq_sot = '';
-                    let eq_dias = 0;
+                    let eq_serie = '', eq_sku = '', eq_modelo = '', eq_tecnico = '', eq_sot = '', eq_dias = 0;
 
-                    // Busca en todas las columnas del Excel sin importar mayúsculas o tildes
                     Object.keys(fila).forEach(k => {
                         const nk = normalizeKey(k);
                         if (nk === 'NUMERO DE SERIE' || nk === 'SERIE' || nk === 'S/N' || nk === 'IMEI') eq_serie = fila[k];
@@ -360,21 +350,33 @@
                     };
                 }).filter(f => f.serie !== '');
 
-                // Si no encontró ninguna serie válida
                 if(datosMapeados.length === 0) {
-                    msgLabel.innerHTML = "<span class='text-red-600'>⚠️ Error: No se encontraron series en el archivo. Verifica las columnas.</span>";
-                    alert("El sistema no encontró la columna 'NÚMERO DE SERIE' o 'SERIE' en el Excel. No se subió nada.");
-                    fileInput.value = "";
-                    return;
+                    msgLabel.innerHTML = "<span class='text-red-600'>⚠️ Error: No se encontraron series. Verifica las cabeceras.</span>";
+                    fileInput.value = ""; return;
                 }
 
-                msgLabel.innerText = `Subiendo ${datosMapeados.length} equipos detectados...`;
+                msgLabel.innerHTML = `<span class='text-blue-600'>Conectando a base de datos... Subiendo ${datosMapeados.length} equipos.</span>`;
+                
                 const TAMAÑO_LOTE = 1000;
+                let huboError = false;
+
                 for (let i = 0; i < Math.ceil(datosMapeados.length / TAMAÑO_LOTE); i++) {
                     const lote = datosMapeados.slice(i * TAMAÑO_LOTE, (i + 1) * TAMAÑO_LOTE);
-                    await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
+                    
+                    // AQUI ESTÁ EL CAMBIO CLAVE: SI SUPABASE RECHAZA, TE LO GRITARÁ EN PANTALLA
+                    const { error } = await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
+                    
+                    if (error) {
+                        alert(`❌ SUPABASE RECHAZÓ LOS DATOS:\n\nMotivo: ${error.message}\n\nRevisa si activaste la seguridad (RLS) en Supabase o si falta alguna columna en la tabla.`);
+                        msgLabel.innerHTML = `<span class='text-red-600 font-bold'>Error crítico en Base de Datos: ${error.message}</span>`;
+                        huboError = true;
+                        break; // Detiene el proceso por completo
+                    }
                 }
-                msgLabel.innerText = `✅ ¡Éxito! ${datosMapeados.length} registros guardados.`;
+                
+                if(!huboError){
+                    msgLabel.innerHTML = `<span class='text-green-600'>✅ ¡Éxito! ${datosMapeados.length} registros guardados en la BD.</span>`;
+                }
                 fileInput.value = "";
             };
             reader.readAsArrayBuffer(file);
@@ -383,7 +385,7 @@
         document.getElementById('btn_subir_almacen').addEventListener('click', () => { procesarExcel('input_excel_almacen', document.getElementById('origen_almacen').value, 'btn_subir_almacen', 'msg_almacen'); });
         document.getElementById('btn_subir_admin').addEventListener('click', () => { procesarExcel('input_excel_admin', 'CLARO_ANTIGUAMIENTO', 'btn_subir_admin', 'msg_admin'); });
 
-        // --- LÓGICA DE BÚSQUEDA / INVENTARIO ---
+        // --- BUSCADOR ---
         async function cargarInventario() {
             const termino = document.getElementById('input_busqueda_inv').value.trim().toUpperCase();
             const filtro = document.getElementById('filtro_estado_inv').value;
@@ -392,60 +394,29 @@
             tbody.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-blue-600 font-bold">Cargando base de datos...</td></tr>';
 
             let query = db.from('cruce_spacecom').select('*').limit(500);
-
-            if (termino) {
-                query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,modelo.ilike.%${termino}%`);
-            }
-
-            if (filtro === 'ALMACEN') {
-                query = query.or('tecnico_asignado.is.null,tecnico_asignado.eq.');
-            } else if (filtro === 'TECNICO') {
-                query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
-            } else if (filtro === 'CLARO') {
-                query = query.eq('origen_reporte', 'CLARO_ANTIGUAMIENTO');
-            }
+            if (termino) query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,modelo.ilike.%${termino}%`);
+            if (filtro === 'ALMACEN') query = query.or('tecnico_asignado.is.null,tecnico_asignado.eq.');
+            else if (filtro === 'TECNICO') query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
+            else if (filtro === 'CLARO') query = query.eq('origen_reporte', 'CLARO_ANTIGUAMIENTO');
 
             const { data, error } = await query;
 
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-red-500">Error: ${error.message}</td></tr>`;
-                return;
-            }
-
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-gray-500">No se encontraron equipos con ese criterio.</td></tr>';
-                return;
-            }
+            if (error) { tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-red-500">Error: ${error.message}</td></tr>`; return; }
+            if (data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-gray-500">No se encontraron equipos.</td></tr>'; return; }
 
             tbody.innerHTML = '';
             data.forEach(eq => {
                 const esAlmacen = !eq.tecnico_asignado || eq.tecnico_asignado.trim() === '';
-                let textoTecnico = eq.tecnico_asignado;
-                
-                if(esAlmacen) {
-                    textoTecnico = '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN</span>';
-                }
-
-                let badgeClaro = '';
-                if(eq.origen_reporte === 'CLARO_ANTIGUAMIENTO') {
-                    badgeClaro = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold block mt-1">DATA ADMIN (CLARO)</span>';
-                }
+                let textoTecnico = esAlmacen ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN</span>' : eq.tecnico_asignado;
+                let badgeClaro = eq.origen_reporte === 'CLARO_ANTIGUAMIENTO' ? '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold block mt-1">DATA ADMIN (CLARO)</span>' : '';
                 
                 const tr = document.createElement('tr');
                 tr.className = 'border-b hover:bg-gray-50';
-                tr.innerHTML = `
-                    <td class="p-3 font-mono font-bold text-gray-800">${eq.serie} ${badgeClaro}</td>
-                    <td class="p-3 text-gray-600 text-sm">${eq.modelo || '-'}</td>
-                    <td class="p-3">${textoTecnico}</td>
-                    <td class="p-3 text-xs text-gray-400">${eq.origen_reporte || '-'}</td>
-                `;
+                tr.innerHTML = `<td class="p-3 font-mono font-bold text-gray-800">${eq.serie} ${badgeClaro}</td><td class="p-3 text-gray-600 text-sm">${eq.modelo || '-'}</td><td class="p-3">${textoTecnico}</td><td class="p-3 text-xs text-gray-400">${eq.origen_reporte || '-'}</td>`;
                 tbody.appendChild(tr);
             });
         }
-
-        document.getElementById('input_busqueda_inv').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') cargarInventario();
-        });
+        document.getElementById('input_busqueda_inv').addEventListener('keypress', (e) => { if (e.key === 'Enter') cargarInventario(); });
 
         // --- REPORTE TÉCNICOS ---
         async function cargarReporteTecnicos() {
@@ -457,10 +428,7 @@
             if(error || !data) { contenedor.innerHTML = `<p class="text-red-500">Error en la carga</p>`; return; }
 
             const agrupado = {};
-            data.forEach(item => {
-                if(!agrupado[item.tecnico_asignado]) agrupado[item.tecnico_asignado] = [];
-                agrupado[item.tecnico_asignado].push(item);
-            });
+            data.forEach(item => { if(!agrupado[item.tecnico_asignado]) agrupado[item.tecnico_asignado] = []; agrupado[item.tecnico_asignado].push(item); });
 
             contenedor.innerHTML = '';
             if(Object.keys(agrupado).length === 0) { contenedor.innerHTML = '<p class="text-gray-500 text-center col-span-2">No hay equipos retenidos.</p>'; return; }
@@ -469,27 +437,11 @@
                 const cardId = 'card_' + tecnico.replace(/[^a-zA-Z0-9]/g, '');
                 let htmlEquipos = equipos.map(eq => `<div class="flex justify-between border-b py-1"><span class="font-mono text-sm font-bold text-gray-800">${eq.serie}</span><span class="text-xs text-gray-500">${eq.modelo || '-'}</span></div>`).join('');
                 contenedor.innerHTML += `
-                    <div class="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col">
-                        <div id="${cardId}" class="p-4 bg-white">
-                            <div class="bg-blue-900 text-white p-3 rounded text-center mb-3">
-                                <h3 class="font-bold uppercase">${tecnico}</h3>
-                                <p class="text-xs text-blue-200">Equipos Pendientes: ${equipos.length}</p>
-                            </div>
-                            <div class="space-y-1 mb-2 max-h-40 overflow-y-auto">${htmlEquipos}</div>
-                            <p class="text-center text-xs text-gray-400 mt-2 border-t pt-2">Devolver a almacén</p>
-                        </div>
-                        <div class="bg-gray-50 p-3 border-t">
-                            <button onclick="copiarComoImagen('${cardId}')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded shadow cursor-pointer">📸 Copiar para WhatsApp</button>
-                        </div>
-                    </div>`;
+                    <div class="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col"><div id="${cardId}" class="p-4 bg-white"><div class="bg-blue-900 text-white p-3 rounded text-center mb-3"><h3 class="font-bold uppercase">${tecnico}</h3><p class="text-xs text-blue-200">Equipos Pendientes: ${equipos.length}</p></div><div class="space-y-1 mb-2 max-h-40 overflow-y-auto">${htmlEquipos}</div><p class="text-center text-xs text-gray-400 mt-2 border-t pt-2">Devolver a almacén</p></div><div class="bg-gray-50 p-3 border-t"><button onclick="copiarComoImagen('${cardId}')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded shadow cursor-pointer">📸 Copiar para WhatsApp</button></div></div>`;
             }
         }
-
         async function copiarComoImagen(elementId) {
-            try {
-                const canvas = await html2canvas(document.getElementById(elementId), { scale: 2 }); 
-                canvas.toBlob(async (blob) => { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); alert("¡Imagen copiada! Ve a WhatsApp y presiona Pegar (Ctrl+V)"); });
-            } catch (err) { alert("Error al copiar imagen. Intenta de nuevo."); }
+            try { const canvas = await html2canvas(document.getElementById(elementId), { scale: 2 }); canvas.toBlob(async (blob) => { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); alert("¡Imagen copiada! Ve a WhatsApp y presiona Pegar (Ctrl+V)"); }); } catch (err) { alert("Error al copiar imagen. Intenta de nuevo."); }
         }
     </script>
 </body>
