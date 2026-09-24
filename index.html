@@ -10,22 +10,22 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- SheetJS (Para Excel) -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <!-- HTML2Canvas (Para tomar "foto" a la pantalla y enviarla por WhatsApp) -->
+    <!-- HTML2Canvas (Para tomar "foto" a la pantalla) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans overflow-x-hidden">
 
-    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
-    <nav class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center relative z-20">
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR (z-50 para estar siempre arriba) -->
+    <nav class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center relative z-50">
         <div class="flex items-center gap-4">
-            <!-- Botón Sanguchito (Hamburger) -->
-            <button id="btn_menu" class="hover:bg-blue-800 p-2 rounded focus:outline-none transition z-30 cursor-pointer">
+            <!-- Botón Sanguchito con onclick directo -->
+            <button onclick="toggleMenu()" class="hover:bg-blue-800 p-2 rounded transition cursor-pointer">
                 <svg class="w-8 h-8 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
             <h1 class="text-2xl font-bold">IPS Logística</h1>
         </div>
         <div class="flex items-center gap-4">
-            <select id="sede_selector" class="text-black rounded px-2 py-1 font-bold">
+            <select id="sede_selector" class="text-black rounded px-2 py-1 font-bold outline-none cursor-pointer">
                 <option value="AREQUIPA">AREQUIPA</option>
                 <option value="LIMA">LIMA</option>
                 <option value="CUSCO">CUSCO</option>
@@ -34,7 +34,7 @@
     </nav>
 
     <!-- MENÚ LATERAL (SIDEBAR) -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 bg-slate-800 text-white w-72 transform -translate-x-full transition-transform duration-300 z-10 pt-20 shadow-2xl">
+    <div id="sidebar" class="fixed inset-y-0 left-0 bg-slate-800 text-white w-72 transform -translate-x-full transition-transform duration-300 z-40 pt-20 shadow-2xl">
         <div class="flex flex-col p-4 space-y-2">
             <button onclick="cambiarVista('vista_pistoleo')" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition">📦 Consola de Pistoleo</button>
             <button onclick="cambiarVista('vista_carga_almacen')" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition">📥 Cargar Data (Almacén)</button>
@@ -55,7 +55,7 @@
             <div class="col-span-2 bg-white rounded-lg shadow-lg p-6 border-t-4 border-blue-600">
                 <h2 class="text-xl font-bold text-gray-700 mb-4">📦 Consola de Pistoleo Rápido</h2>
                 <div class="flex gap-4 mb-6">
-                    <select id="tipo_flujo" class="border-2 border-gray-300 rounded p-3 font-bold text-lg w-1/2 outline-none">
+                    <select id="tipo_flujo" class="border-2 border-gray-300 rounded p-3 font-bold text-lg w-1/2 outline-none cursor-pointer">
                         <option value="ANTIGUAMIENTO">Antiguamiento</option>
                         <option value="RECUPERADO">Recuperados</option>
                     </select>
@@ -76,40 +76,40 @@
                     <span id="contador_caja" class="bg-blue-100 text-blue-800 text-xl font-bold px-3 py-1 rounded-full">0</span>
                 </div>
                 <ul id="lista_escaneados" class="space-y-2 h-64 overflow-y-auto mb-4 border-b pb-4"></ul>
-                <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded shadow-lg">🖨️ Cerrar Caja e Imprimir</button>
+                <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded shadow-lg cursor-pointer">🖨️ Cerrar Caja e Imprimir</button>
             </div>
         </section>
 
-        <!-- VISTA 2: CARGA ALMACÉN (SpaceCom) -->
+        <!-- VISTA 2: CARGA ALMACÉN -->
         <section id="vista_carga_almacen" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-blue-500">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">📥 Carga de Datos - Almacén</h2>
-                <select id="origen_almacen" class="w-full border-2 p-3 mb-4 font-bold rounded">
+                <select id="origen_almacen" class="w-full border-2 p-3 mb-4 font-bold rounded outline-none cursor-pointer">
                     <option value="SPACECOM_STOCK_TECNICO">SpaceCom: Stock de Técnicos</option>
                     <option value="SPACECOM_SOTS">SpaceCom: Historial SOTs</option>
                 </select>
                 <input type="file" id="input_excel_almacen" accept=".xlsx, .csv" class="w-full border-2 border-dashed p-4 mb-4 cursor-pointer">
-                <button id="btn_subir_almacen" class="w-full bg-blue-600 text-white font-bold py-4 rounded shadow mt-4">Subir Archivo SpaceCom</button>
+                <button id="btn_subir_almacen" class="w-full bg-blue-600 text-white font-bold py-4 rounded shadow mt-4 cursor-pointer">Subir Archivo SpaceCom</button>
                 <p id="msg_almacen" class="mt-4 text-center font-bold text-blue-700"></p>
             </div>
         </section>
 
-        <!-- VISTA 3: REPORTE TÉCNICOS (WhatsApp) -->
+        <!-- VISTA 3: REPORTE TÉCNICOS -->
         <section id="vista_reporte_tecnicos" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">📱 Equipos Retenidos por Técnico</h2>
-                <button onclick="cargarReporteTecnicos()" class="bg-blue-100 text-blue-800 px-4 py-2 rounded font-bold shadow hover:bg-blue-200">🔄 Actualizar</button>
+                <button onclick="cargarReporteTecnicos()" class="bg-blue-100 text-blue-800 px-4 py-2 rounded font-bold shadow hover:bg-blue-200 cursor-pointer">🔄 Actualizar</button>
             </div>
             <div id="contenedor_tecnicos" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </section>
 
-        <!-- VISTA 4: ADMIN CLARO (Protegida) -->
+        <!-- VISTA 4: ADMIN CLARO -->
         <section id="vista_admin" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-red-600">
                 <h2 class="text-2xl font-bold text-red-800 mb-2">⚙️ Panel Administrador: Claro</h2>
                 <p class="mb-4 text-gray-600">Subir reporte de Antiguamiento (>45 días)</p>
                 <input type="file" id="input_excel_admin" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-red-300 bg-red-50 p-4 mb-4 cursor-pointer">
-                <button id="btn_subir_admin" class="w-full bg-red-700 text-white font-bold py-4 rounded shadow mt-4">Subir Reporte de Claro</button>
+                <button id="btn_subir_admin" class="w-full bg-red-700 text-white font-bold py-4 rounded shadow mt-4 cursor-pointer">Subir Reporte de Claro</button>
                 <p id="msg_admin" class="mt-4 text-center font-bold text-red-700"></p>
             </div>
         </section>
@@ -122,24 +122,15 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY';
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- MENÚ HAMBURGUESA (SANGUCHITO) ---
-        const btnMenu = document.getElementById('btn_menu');
+        // --- LÓGICA DEL MENÚ A PRUEBA DE FALLOS ---
         const sidebar = document.getElementById('sidebar');
-        let menuAbierto = false;
 
-        btnMenu.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita conflictos de clic
-            menuAbierto = !menuAbierto;
-            if(menuAbierto) {
+        function toggleMenu() {
+            if (sidebar.classList.contains('-translate-x-full')) {
                 sidebar.classList.remove('-translate-x-full');
             } else {
                 sidebar.classList.add('-translate-x-full');
             }
-        });
-
-        function cerrarMenu() {
-            menuAbierto = false;
-            sidebar.classList.add('-translate-x-full');
         }
 
         function cambiarVista(idVista) {
@@ -149,35 +140,36 @@
             });
             document.getElementById(idVista).classList.remove('hidden');
             document.getElementById(idVista).classList.add('block');
-            cerrarMenu();
+            sidebar.classList.add('-translate-x-full'); // Cierra el menú
         }
 
-        // --- SEGURIDAD ADMIN ---
         function verificarAdmin() {
-            const pass = prompt("Ingrese la contraseña de administrador (Clave: claro123):");
+            const pass = prompt("Ingrese la contraseña (Clave: claro123):");
             if(pass === "claro123") {
                 cambiarVista('vista_admin');
             } else if (pass !== null) {
                 alert("Contraseña incorrecta.");
             }
-            cerrarMenu();
+            sidebar.classList.add('-translate-x-full');
         }
 
-        // --- FOCUS LOCK INTELIGENTE (Solo actúa en pistoleo) ---
+        // --- FOCUS LOCK CORREGIDO ---
         const inputLaser = document.getElementById('input_laser');
         document.addEventListener('click', (e) => {
+            // REGLA DE ORO: Si haces clic en la barra de navegación o en el menú, ignora el Focus Lock.
+            if (e.target.closest('nav') || e.target.closest('#sidebar')) {
+                return;
+            }
+            
+            // Si estás en la consola de pistoleo y no haces clic en un botón o selector, bloquea el láser
             const vistaPistoleo = document.getElementById('vista_pistoleo');
-            // Solo forzamos el focus si estamos en la pantalla de pistoleo
             if (!vistaPistoleo.classList.contains('hidden')) {
-                // Si el clic no fue en el menú, ni en un botón, ni en la barra lateral...
-                if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON' && !sidebar.contains(e.target) && !btnMenu.contains(e.target)) {
+                if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
                     inputLaser.focus();
                 }
             } else {
-                // Si damos clic fuera del menú en otras pantallas, cerramos el menú
-                if (!sidebar.contains(e.target) && !btnMenu.contains(e.target) && menuAbierto) {
-                    cerrarMenu();
-                }
+                // Si haces clic fuera en otra pantalla, cierra el menú si estaba abierto
+                sidebar.classList.add('-translate-x-full');
             }
         });
 
@@ -210,7 +202,6 @@
                 inputLaser.value = ''; 
                 if(!seriePistoleada) return;
 
-                // Consulta a la Base de Datos
                 const { data: cruceData } = await supabase.from('cruce_spacecom').select('tecnico_asignado, sot_instalacion').eq('serie', seriePistoleada).single();
                 
                 const resDiv = document.getElementById('resultado_cruce');
@@ -245,7 +236,7 @@
             }
         });
 
-        // --- SUBIDA DE EXCEL UNIVERSAL ---
+        // --- SUBIDA DE EXCEL ---
         async function procesarExcel(inputId, origenVal, btnId, msgId) {
             const fileInput = document.getElementById(inputId);
             const msgLabel = document.getElementById(msgId);
@@ -322,7 +313,7 @@
                             <p class="text-center text-xs text-gray-400 mt-2 border-t pt-2">Devolver a almacén</p>
                         </div>
                         <div class="bg-gray-50 p-3 border-t">
-                            <button onclick="copiarComoImagen('${cardId}')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded shadow">
+                            <button onclick="copiarComoImagen('${cardId}')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded shadow cursor-pointer">
                                 📸 Copiar para WhatsApp
                             </button>
                         </div>
