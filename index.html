@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPS - Módulo Logístico</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SheetJS (Para Excel) -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- HTML2Canvas (Para WhatsApp) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans overflow-x-hidden">
@@ -14,7 +18,7 @@
     <!-- BARRA DE NAVEGACIÓN -->
     <nav class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center relative z-50">
         <div class="flex items-center gap-4">
-            <!-- Botón Sanguchito (Ahora 100% libre de bloqueos) -->
+            <!-- BOTÓN SANGUCHITO -->
             <button onclick="toggleMenu()" class="hover:bg-blue-800 p-2 rounded cursor-pointer transition">
                 <svg class="w-8 h-8 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
@@ -55,8 +59,8 @@
                         <option value="ANTIGUAMIENTO">Antiguamiento</option>
                         <option value="RECUPERADO">Recuperados</option>
                     </select>
-                    <!-- El cuadro de caja ahora es auto-generado pero editable -->
-                    <input type="text" id="caja_activa" class="border-2 border-blue-400 bg-blue-50 rounded p-3 font-bold text-lg w-1/2 uppercase outline-none text-center" title="Puedes editarlo manualmente si deseas">
+                    <!-- CAJA ACTIVA AUTO-GENERADA -->
+                    <input type="text" id="caja_activa" class="border-2 border-blue-400 bg-blue-50 rounded p-3 font-bold text-lg w-1/2 uppercase outline-none text-center">
                 </div>
                 <div class="bg-blue-50 border-2 border-dashed border-blue-400 rounded-lg p-8 text-center cursor-text" id="zona_pistoleo">
                     <input type="text" id="input_laser" autofocus autocomplete="off" class="w-full text-center text-4xl font-mono font-bold bg-transparent outline-none text-blue-900 placeholder-blue-200" placeholder="ESPERANDO LECTURA...">
@@ -67,12 +71,15 @@
                     <p class="text-gray-700 font-bold" id="res_sot">SOT: ---</p>
                 </div>
             </div>
+            
             <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold text-gray-700">Equipos en Caja</h2>
                     <span id="contador_caja" class="bg-blue-100 text-blue-800 text-xl font-bold px-3 py-1 rounded-full">0</span>
                 </div>
                 <ul id="lista_escaneados" class="space-y-2 flex-grow overflow-y-auto mb-4 border-b pb-4 min-h-[250px]"></ul>
+                
+                <!-- BOTÓN CERRAR CAJA -->
                 <button onclick="cerrarCaja()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-4 rounded shadow-lg cursor-pointer transition text-lg">
                     🖨️ Cerrar Caja e Imprimir
                 </button>
@@ -116,21 +123,22 @@
     </div>
 
     <script>
-        // --- CONEXIÓN SUPABASE ---
+        // --- 1. CONEXIÓN SUPABASE (CORREGIDA PARA EVITAR COLAPSO) ---
         const SUPABASE_URL = 'https://fbxzhasfdvkqunnebkij.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Se declara como "db" para no chocar con la librería interna de Supabase
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- MENÚ HAMBURGUESA (CORREGIDO) ---
-        const sidebar = document.getElementById('sidebar');
+        // --- 2. MENÚ SANGUCHITO ---
         function toggleMenu() {
-            sidebar.classList.toggle('-translate-x-full');
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
 
         function cambiarVista(idVista) {
             document.querySelectorAll('.vista-seccion').forEach(vista => vista.classList.add('hidden'));
             document.getElementById(idVista).classList.remove('hidden');
-            sidebar.classList.add('-translate-x-full'); // Cierra el menú automáticamente
+            document.getElementById('sidebar').classList.add('-translate-x-full'); // Cierra el menú
         }
 
         function verificarAdmin() {
@@ -140,71 +148,76 @@
             } else if (pass !== null) {
                 alert("Contraseña incorrecta.");
             }
-            sidebar.classList.add('-translate-x-full');
+            document.getElementById('sidebar').classList.add('-translate-x-full');
         }
 
-        // --- GENERADOR AUTOMÁTICO DE CAJAS ---
+        // --- 3. CORRELATIVO AUTOMÁTICO DE CAJAS ---
         let numeroCaja = 1;
         const inputCaja = document.getElementById('caja_activa');
         const selectorSede = document.getElementById('sede_selector');
 
         function actualizarNombreCaja() {
-            const prefijo = selectorSede.value.substring(0,3); // Toma "ARE", "LIM", etc.
+            const prefijo = selectorSede.value.substring(0,3); // Toma "ARE"
             const num = String(numeroCaja).padStart(3, '0');   // Convierte 1 en "001"
             inputCaja.value = `${prefijo}-${num}`;
         }
 
         selectorSede.addEventListener('change', actualizarNombreCaja);
-        actualizarNombreCaja(); // Ejecutar al cargar la página
+        actualizarNombreCaja(); // Generar la primera caja al abrir la página
 
+        // --- 4. FUNCIÓN CERRAR CAJA ---
         let equiposEnCaja = 0;
-        const listaEscaneados = document.getElementById('lista_escaneados');
-        const contadorCaja = document.getElementById('contador_caja');
-
+        
         function cerrarCaja() {
             if (equiposEnCaja === 0) {
-                alert("No puedes cerrar una caja vacía.");
+                alert("No puedes cerrar una caja vacía. Pistolea al menos un equipo primero.");
                 return;
             }
-            alert(`✅ La caja ${inputCaja.value} ha sido cerrada y está lista para imprimir.`);
             
-            // Limpiar la lista para la siguiente caja
-            listaEscaneados.innerHTML = '';
+            alert(`✅ La caja ${inputCaja.value} ha sido cerrada correctamente y está lista para despacho.`);
+            
+            // Limpiar todo visualmente
+            document.getElementById('lista_escaneados').innerHTML = '';
             equiposEnCaja = 0;
-            contadorCaja.innerText = '0';
+            document.getElementById('contador_caja').innerText = '0';
             
-            // Aumentar el correlativo automáticamente
+            // Aumentar número y autogenerar la siguiente
             numeroCaja++;
             actualizarNombreCaja();
+            
+            // Devolver el cursor al láser
             document.getElementById('input_laser').focus();
         }
 
-        // --- FOCUS LOCK INTELIGENTE (Solo bloquea clics dentro del panel central) ---
+        // --- 5. FOCUS LOCK INTELIGENTE ---
         document.getElementById('vista_pistoleo').addEventListener('click', (e) => {
-            // Si el clic NO fue en un botón, ni en una lista desplegable, ni escribiendo en la caja manual...
-            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'INPUT') {
+            const tag = e.target.tagName;
+            // Solo fuerza el láser si no estás dando clic a un botón, select o input manualmente
+            if (tag !== 'BUTTON' && tag !== 'SELECT' && tag !== 'INPUT') {
                 document.getElementById('input_laser').focus();
             }
         });
 
-        // --- SONIDOS ---
+        // --- 6. EFECTOS DE SONIDO (Protegidos) ---
         const playSound = (type) => {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            if(type === 'success') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                osc.start(); osc.stop(ctx.currentTime + 0.15);
-            } else {
-                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                osc.start(); osc.stop(ctx.currentTime + 0.3);
-            }
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                if(type === 'success') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); osc.stop(ctx.currentTime + 0.15);
+                } else {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start(); osc.stop(ctx.currentTime + 0.3);
+                }
+            } catch(err) { console.log("Audio bloqueado por el navegador"); }
         };
 
-        // --- LÓGICA DE PISTOLEO ---
+        // --- 7. LÓGICA DE PISTOLEO ---
         const inputLaser = document.getElementById('input_laser');
 
         inputLaser.addEventListener('keypress', async (e) => {
@@ -214,7 +227,7 @@
                 inputLaser.value = ''; 
                 if(!seriePistoleada) return;
 
-                const { data: cruceData } = await supabase.from('cruce_spacecom').select('tecnico_asignado, sot_instalacion').eq('serie', seriePistoleada).single();
+                const { data: cruceData } = await db.from('cruce_spacecom').select('tecnico_asignado, sot_instalacion').eq('serie', seriePistoleada).single();
                 
                 const resDiv = document.getElementById('resultado_cruce');
                 resDiv.classList.remove('hidden', 'bg-red-50', 'bg-green-50', 'border-red-500', 'border-green-500');
@@ -230,9 +243,8 @@
                     resDiv.classList.add('bg-green-50', 'border-green-500');
                 }
 
-                // Aquí guardamos en Supabase incluyendo el Nombre de la Caja actual
-                const sedeSeleccionada = document.getElementById('sede_selector').value;
-                const { error: insertError } = await supabase.from('equipos_escaneados').insert([{ 
+                const sedeSeleccionada = selectorSede.value;
+                const { error: insertError } = await db.from('equipos_escaneados').insert([{ 
                     serie: seriePistoleada, 
                     sede: sedeSeleccionada
                 }]);
@@ -243,16 +255,17 @@
                 } else {
                     playSound('success'); 
                     equiposEnCaja++;
-                    contadorCaja.innerText = equiposEnCaja;
+                    document.getElementById('contador_caja').innerText = equiposEnCaja;
+                    
                     const li = document.createElement('li');
                     li.className = 'text-sm font-mono bg-gray-50 p-2 rounded border flex justify-between';
                     li.innerHTML = `<span class="text-green-600 font-bold">✓ ${seriePistoleada}</span>`;
-                    listaEscaneados.prepend(li); 
+                    document.getElementById('lista_escaneados').prepend(li); 
                 }
             }
         });
 
-        // --- SUBIDA DE EXCEL UNIVERSAL ---
+        // --- 8. SUBIDA MASIVA DE EXCEL ---
         async function procesarExcel(inputId, origenVal, btnId, msgId) {
             const fileInput = document.getElementById(inputId);
             const msgLabel = document.getElementById(msgId);
@@ -280,7 +293,7 @@
                 const TAMAÑO_LOTE = 1000;
                 for (let i = 0; i < Math.ceil(datosMapeados.length / TAMAÑO_LOTE); i++) {
                     const lote = datosMapeados.slice(i * TAMAÑO_LOTE, (i + 1) * TAMAÑO_LOTE);
-                    await supabase.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
+                    await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                 }
                 msgLabel.innerText = "✅ Datos subidos correctamente.";
                 fileInput.value = "";
@@ -296,14 +309,14 @@
             procesarExcel('input_excel_admin', 'CLARO_ANTIGUAMIENTO', 'btn_subir_admin', 'msg_admin');
         });
 
-        // --- REPORTE WHATSAPP ---
+        // --- 9. REPORTE PARA WHATSAPP ---
         async function cargarReporteTecnicos() {
             cambiarVista('vista_reporte_tecnicos');
             const contenedor = document.getElementById('contenedor_tecnicos');
             contenedor.innerHTML = '<p class="text-blue-500 font-bold col-span-2 text-center">Consultando base de datos...</p>';
 
-            const { data, error } = await supabase.from('cruce_spacecom').select('*').not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
-            if(error || !data) { contenedor.innerHTML = `<p class="text-red-500">Error</p>`; return; }
+            const { data, error } = await db.from('cruce_spacecom').select('*').not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
+            if(error || !data) { contenedor.innerHTML = `<p class="text-red-500">Error en la carga</p>`; return; }
 
             const agrupado = {};
             data.forEach(item => {
@@ -312,7 +325,7 @@
             });
 
             contenedor.innerHTML = '';
-            if(Object.keys(agrupado).length === 0) { contenedor.innerHTML = '<p class="text-gray-500">Sin equipos retenidos.</p>'; return; }
+            if(Object.keys(agrupado).length === 0) { contenedor.innerHTML = '<p class="text-gray-500 text-center col-span-2">No hay equipos retenidos.</p>'; return; }
 
             for (const [tecnico, equipos] of Object.entries(agrupado)) {
                 const cardId = 'card_' + tecnico.replace(/[^a-zA-Z0-9]/g, '');
