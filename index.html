@@ -121,6 +121,7 @@
                     <input type="text" id="busqueda_anti" placeholder="Serie, Técnico o SOT..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-2/3 outline-none focus:border-blue-500">
                     <select id="filtro_anti" class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/3 outline-none cursor-pointer">
                         <option value="TODOS">Ver Todos</option>
+                        <option value="FALTA_BUSCAR">Falta Buscar (Sin rastreo)</option>
                         <option value="ALMACEN">En Almacén</option>
                         <option value="TECNICO">En poder de Técnico</option>
                         <option value="SOT">Liquidados en SOT</option>
@@ -286,7 +287,7 @@
                 resDiv.className = 'mt-4 p-4 rounded-lg border-l-4 shadow-sm block bg-green-50 border-green-500';
                 document.getElementById('res_serie').innerText = `Serie: ${serie} ${equipoDB.dias_antiguedad ? '('+equipoDB.dias_antiguedad+' Días)' : ''}`;
                 
-                let ubicacion = "EN ALMACÉN";
+                let ubicacion = "FALTA BUSCAR EN ESTANTE";
                 if(equipoDB.tecnico_asignado) ubicacion = `Técnico: ${equipoDB.tecnico_asignado}`;
                 else if(equipoDB.sot_instalacion) ubicacion = `SOT: ${equipoDB.sot_instalacion}`;
                 document.getElementById('res_ubicacion').innerText = `Ubicación: ${ubicacion}`;
@@ -309,7 +310,7 @@
             if (error || !data || data.length === 0) return alert(`No hay datos registrados para ${sedeActual}.`);
 
             const datosParaExcel = data.map(eq => {
-                let ubicacion = "EN ALMACÉN";
+                let ubicacion = "FALTA BUSCAR EN ESTANTE";
                 if(eq.tecnico_asignado) ubicacion = `TÉCNICO: ${eq.tecnico_asignado}`;
                 else if(eq.sot_instalacion) ubicacion = `SOT: ${eq.sot_instalacion}`;
 
@@ -332,7 +333,7 @@
 
         const normalizeKey = (key) => key.toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-        // 1. CARGA SUPERVISOR (Extrae Ciudad, SKU, Modelo y Serie)
+        // 1. CARGA SUPERVISOR (Nace sin técnico ni SOT, marcados como FALTA BUSCAR)
         async function procesarAdmin(inputId, tipoFlujo, msgId) {
             const fileInput = document.getElementById(inputId); const msgLabel = document.getElementById(msgId);
             const file = fileInput.files[0]; if (!file) return alert("Selecciona un archivo");
@@ -378,11 +379,11 @@
                     const {error} = await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                     if(error) return msgLabel.innerHTML = `<span class='text-red-600'>Error BD: ${error.message}</span>`;
                 }
-                msgLabel.innerHTML = `<span class='text-green-600'>✅ Data del Supervisor cargada con éxito.</span>`; fileInput.value = "";
+                msgLabel.innerHTML = `<span class='text-green-600'>✅ Data del Supervisor cargada (Estado inicial: Falta buscar).</span>`; fileInput.value = "";
             }; reader.readAsArrayBuffer(file);
         }
 
-        // 2. CRUCE PURO DE SERIES CON SPACECOM (Stock o SOTs)
+        // 2. CRUCE PURO DE SERIES CON SPACECOM
         async function procesarSpaceCom(inputId, selectId, tipoFlujo, msgId) {
             const fileInput = document.getElementById(inputId); 
             const msgLabel = document.getElementById(msgId);
@@ -463,7 +464,7 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // RADAR
+        // RADAR CORREGIDO (Muestra FALTA BUSCAR si no están en SpaceCom)
         async function cargarRadar(tipoFlujo, inputId, filtroId, tbodyId) {
             const termino = document.getElementById(inputId).value.trim().toUpperCase();
             const filtro = document.getElementById(filtroId) ? document.getElementById(filtroId).value : 'TODOS';
@@ -474,7 +475,8 @@
             let query = db.from('cruce_spacecom').select('*').eq('tipo_flujo', tipoFlujo).ilike('ciudad', sedeActual).limit(500);
             if (termino) query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,sot_instalacion.ilike.%${termino}%,modelo.ilike.%${termino}%`);
             
-            if (filtro === 'ALMACEN') query = query.is('tecnico_asignado', null).is('sot_instalacion', null);
+            if (filtro === 'FALTA_BUSCAR') query = query.is('tecnico_asignado', null).is('sot_instalacion', null);
+            else if (filtro === 'ALMACEN') query = query.is('tecnico_asignado', null).is('sot_instalacion', null);
             else if (filtro === 'TECNICO') query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
             else if (filtro === 'SOT') query = query.not('sot_instalacion', 'is', null).neq('sot_instalacion', '').neq('sot_instalacion', 'EMPTY');
 
@@ -483,7 +485,7 @@
 
             tbody.innerHTML = '';
             data.forEach(eq => {
-                let ubicacion = '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">EN ALMACÉN</span>';
+                let ubicacion = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR EN ESTANTE</span>';
                 if (eq.tecnico_asignado) ubicacion = `<span class="font-bold text-gray-700">Técnico: </span>${eq.tecnico_asignado}`;
                 else if (eq.sot_instalacion && eq.sot_instalacion !== 'EMPTY') ubicacion = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">SOT: ${eq.sot_instalacion}</span>`;
 
