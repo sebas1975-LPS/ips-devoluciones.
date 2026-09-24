@@ -171,7 +171,7 @@
                 </div>
                 <button onclick="cargarRadar('RECUPERADO', 'busqueda_recu', 'filtro_recu_dummy', 'tbody_recu')" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow mb-6">Realizar Búsqueda</button>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b-2">SKU</th><th class="p-3 border-b-2">Modelo</th><th class="p-3 border-b-2">Serie</th><th class="p-3 border-b-2">Estado</th></tr></thead><tbody id="tbody_recu"><tr><td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic em Buscar...</td></tr></tbody></table>
+                    <table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b-2">SKU</th><th class="p-3 border-b-2">Modelo</th><th class="p-3 border-b-2">Serie</th><th class="p-3 border-b-2">Estado</th></tr></thead><tbody id="tbody_recu"><tr><td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar...</td></tr></tbody></table>
                 </div>
             </div>
         </section>
@@ -284,7 +284,7 @@
                 resDiv.className = 'mt-4 p-4 rounded-lg border-l-4 shadow-sm block bg-green-50 border-green-500';
                 document.getElementById('res_serie').innerText = `Serie: ${serie} ${equipoDB.dias_antiguedad ? '('+equipoDB.dias_antiguedad+' Días)' : ''}`;
                 
-                let ubicacion = "FALTA BUSCAR";
+                let ubicacion = "FALTA BUSCAR EN ESTANTE";
                 if(equipoDB.tecnico_asignado) ubicacion = `Técnico: ${equipoDB.tecnico_asignado}`;
                 else if(equipoDB.sot_instalacion) ubicacion = `SOT: ${equipoDB.sot_instalacion}`;
                 document.getElementById('res_ubicacion').innerText = `Ubicación: ${ubicacion}`;
@@ -307,7 +307,7 @@
             if (error || !data || data.length === 0) return alert(`No hay datos registrados para ${sedeActual}.`);
 
             const datosParaExcel = data.map(eq => {
-                let ubicacion = "FALTA BUSCAR";
+                let ubicacion = "FALTA BUSCAR EN ESTANTE";
                 if(eq.tecnico_asignado) ubicacion = `TÉCNICO: ${eq.tecnico_asignado}`;
                 else if(eq.sot_instalacion) ubicacion = `SOT: ${eq.sot_instalacion}`;
 
@@ -330,11 +330,11 @@
 
         const normalizeKey = (key) => key.toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-        // PROCESAR ADMIN (CORREGIDO PARA SEPARAR CORRECTAMENTE SKU Y MODELO)
+        // PROCESAR ADMIN
         async function procesarAdmin(inputId, tipoFlujo, msgId) {
             const fileInput = document.getElementById(inputId); const msgLabel = document.getElementById(msgId);
             const file = fileInput.files[0]; if (!file) return alert("Selecciona un archivo");
-            msgLabel.innerHTML = "<span class='text-blue-600'>Procesando Master y extrayendo SKU y Modelo...</span>";
+            msgLabel.innerHTML = "<span class='text-blue-600'>Procesando Master...</span>";
             
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -347,7 +347,6 @@
                     Object.keys(fila).forEach(k => {
                         const nk = normalizeKey(k);
                         if (nk.includes('SERIE') || nk==='S/N' || nk==='IMEI') eq_serie = fila[k];
-                        // Capturamos el material real (SKU numérico) y la descripción (Modelo)
                         if (nk==='MATERIAL' || nk==='SKU' || nk==='CODIGO') eq_sku = fila[k];
                         if (nk.includes('DESCRIPCION') || nk.includes('MODELO')) eq_modelo = fila[k];
                         if (nk.includes('DIAS')) eq_dias = fila[k];
@@ -368,34 +367,35 @@
                 });
 
                 if(datosMaestros.length === 0) return msgLabel.innerHTML = "<span class='text-red-600'>⚠️ No se encontraron equipos válidos.</span>";
-                msgLabel.innerHTML = `<span class='text-blue-600'>Guardando ${datosMaestros.length} equipos en la base maestra...</span>`;
+                msgLabel.innerHTML = "<span class='text-blue-600'>Limpiando registros previos y guardando nueva data maestra...</span>";
                 
+                // Borramos solo la data anterior de este mismo tipo y ciudad para que no se mezcle basura vieja
+                await db.from('cruce_spacecom').delete().eq('tipo_flujo', tipoFlujo);
+
                 for (let i = 0; i < Math.ceil(datosMaestros.length/1000); i++) {
                     const lote = datosMaestros.slice(i*1000, (i+1)*1000);
                     const {error} = await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                     if(error) return msgLabel.innerHTML = `<span class='text-red-600'>Error BD: ${error.message}</span>`;
                 }
-                msgLabel.innerHTML = `<span class='text-green-600'>✅ Base Maestra creada y SKU/Modelo corregidos.</span>`; fileInput.value = "";
+                msgLabel.innerHTML = `<span class='text-green-600'>✅ Base Maestra creada con éxito (${datosMaestros.length} equipos).</span>`; fileInput.value = "";
             }; reader.readAsArrayBuffer(file);
         }
 
-        // PROCESAR SPACECOM (SOPORTA ALMACÉN, TÉCNICOS Y SOTS)
+        // PROCESAR SPACECOM (SOLO BUSCA Y ACTUALIZA TÉCNICO O SOT, JAMÁS TOCA LA CIUDAD)
         async function procesarSpaceCom(inputId, selectId, tipoFlujo, msgId) {
             const fileInput = document.getElementById(inputId); const msgLabel = document.getElementById(msgId);
             const tipoReporte = document.getElementById(selectId).value; // ALMACEN, TECNICOS, SOTS
             const file = fileInput.files[0]; if (!file) return alert("Selecciona un archivo");
             msgLabel.innerHTML = "<span class='text-blue-600'>Cruzando con BD...</span>";
             
-            const { data: dbData } = await db.from('cruce_spacecom').select('serie').eq('tipo_flujo', tipoFlujo);
-            const seriesMaestras = new Set(dbData.map(d => d.serie));
-
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                 
-                const actualizaciones = [];
-                jsonData.forEach(fila => {
+                let actualizados = 0;
+
+                for (const fila of jsonData) {
                     let eq_serie='', eq_valor='';
                     Object.keys(fila).forEach(k => {
                         const nk = normalizeKey(k);
@@ -404,31 +404,30 @@
                         if (tipoReporte === 'SOTS' && (nk==='SOT' || nk==='ORDEN')) eq_valor = fila[k];
                     });
 
-                    const sl = (eq_serie||'').toString().trim().toUpperCase(); const vl = (eq_valor||'').toString().trim();
+                    const sl = (eq_serie||'').toString().trim().toUpperCase(); 
+                    const vl = (eq_valor||'').toString().trim();
                     
-                    if (sl && seriesMaestras.has(sl)) {
+                    if (sl) {
                         if (tipoReporte === 'ALMACEN') {
-                            // Si viene de stock almacén spacecom, queda limpio sin técnico ni sot
-                            actualizaciones.push({ serie: sl, tecnico_asignado: null, sot_instalacion: null, tipo_flujo: tipoFlujo });
+                            // Limpia técnico y sot si el reporte dice que volvió al almacén
+                            const { error } = await db.from('cruce_spacecom').update({ tecnico_asignado: null, sot_instalacion: null }).eq('serie', sl).eq('tipo_flujo', tipoFlujo);
+                            if(!error) actualizados++;
                         } else if (tipoReporte === 'TECNICOS' && vl) {
-                            actualizaciones.push({ serie: sl, tecnico_asignado: vl, tipo_flujo: tipoFlujo });
+                            const { error } = await db.from('cruce_spacecom').update({ tecnico_asignado: vl }).eq('serie', sl).eq('tipo_flujo', tipoFlujo);
+                            if(!error) actualizados++;
                         } else if (tipoReporte === 'SOTS' && vl) {
-                            actualizaciones.push({ serie: sl, sot_instalacion: vl, tipo_flujo: tipoFlujo });
+                            const { error } = await db.from('cruce_spacecom').update({ sot_instalacion: vl }).eq('serie', sl).eq('tipo_flujo', tipoFlujo);
+                            if(!error) actualizados++;
                         }
                     }
-                });
-
-                if(actualizaciones.length === 0) return msgLabel.innerHTML = "<span class='text-yellow-600'>⚠️ No hubo cruces exitosos.</span>";
-                
-                for (let i = 0; i < Math.ceil(actualizaciones.length/1000); i++) {
-                    const lote = actualizaciones.slice(i*1000, (i+1)*1000);
-                    await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                 }
-                msgLabel.innerHTML = `<span class='text-green-600'>✅ ${actualizaciones.length} registros actualizados desde SpaceCom.</span>`; fileInput.value = "";
+
+                msgLabel.innerHTML = `<span class='text-green-600'>✅ Proceso terminado. ${actualizados} registros actualizados sin alterar ciudades.</span>`; 
+                fileInput.value = "";
             }; reader.readAsArrayBuffer(file);
         }
 
-        // RADAR CON ESTADOS REALES (FALTA BUSCAR / TÉCNICO / SOT)
+        // RADAR
         async function cargarRadar(tipoFlujo, inputId, filtroId, tbodyId) {
             const termino = document.getElementById(inputId).value.trim().toUpperCase();
             const filtro = document.getElementById(filtroId) ? document.getElementById(filtroId).value : 'TODOS';
@@ -441,16 +440,16 @@
             
             if (filtro === 'FALTA_BUSCAR') query = query.is('tecnico_asignado', null).is('sot_instalacion', null);
             else if (filtro === 'TECNICO') query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
-            else if (filtro === 'SOT') query = query.not('sot_instalacion', 'is', null).neq('sot_instalacion', '');
+            else if (filtro === 'SOT') query = query.not('sot_instalacion', 'is', null).neq('sot_instalacion', '').neq('sot_instalacion', 'EMPTY');
 
             const { data } = await query;
             if (!data || data.length === 0) return tbody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-500">Sin resultados para ${sedeActual}.</td></tr>`;
 
             tbody.innerHTML = '';
             data.forEach(eq => {
-                let ubicacion = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR</span>';
+                let ubicacion = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR EN ESTANTE</span>';
                 if (eq.tecnico_asignado) ubicacion = `<span class="font-bold text-gray-700">Técnico: </span>${eq.tecnico_asignado}`;
-                else if (eq.sot_instalacion) ubicacion = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">SOT: ${eq.sot_instalacion}</span>`;
+                else if (eq.sot_instalacion && eq.sot_instalacion !== 'EMPTY') ubicacion = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">SOT: ${eq.sot_instalacion}</span>`;
 
                 const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50';
                 if (tipoFlujo === 'ANTIGUAMIENTO') {
