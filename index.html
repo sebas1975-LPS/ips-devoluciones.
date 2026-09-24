@@ -4,22 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPS - Módulo Logístico</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SheetJS (Para Excel) -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <!-- HTML2Canvas (Para tomar "foto" a la pantalla) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans overflow-x-hidden">
 
-    <!-- BARRA DE NAVEGACIÓN SUPERIOR (z-50 para estar siempre arriba) -->
+    <!-- BARRA DE NAVEGACIÓN -->
     <nav class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center relative z-50">
         <div class="flex items-center gap-4">
-            <!-- Botón Sanguchito con onclick directo -->
-            <button onclick="toggleMenu()" class="hover:bg-blue-800 p-2 rounded transition cursor-pointer">
+            <!-- Botón Sanguchito (Ahora 100% libre de bloqueos) -->
+            <button onclick="toggleMenu()" class="hover:bg-blue-800 p-2 rounded cursor-pointer transition">
                 <svg class="w-8 h-8 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
             <h1 class="text-2xl font-bold">IPS Logística</h1>
@@ -59,7 +55,8 @@
                         <option value="ANTIGUAMIENTO">Antiguamiento</option>
                         <option value="RECUPERADO">Recuperados</option>
                     </select>
-                    <input type="text" id="caja_activa" placeholder="Caja (Ej: AQP-001)" class="border-2 border-gray-300 rounded p-3 font-bold text-lg w-1/2 uppercase outline-none">
+                    <!-- El cuadro de caja ahora es auto-generado pero editable -->
+                    <input type="text" id="caja_activa" class="border-2 border-blue-400 bg-blue-50 rounded p-3 font-bold text-lg w-1/2 uppercase outline-none text-center" title="Puedes editarlo manualmente si deseas">
                 </div>
                 <div class="bg-blue-50 border-2 border-dashed border-blue-400 rounded-lg p-8 text-center cursor-text" id="zona_pistoleo">
                     <input type="text" id="input_laser" autofocus autocomplete="off" class="w-full text-center text-4xl font-mono font-bold bg-transparent outline-none text-blue-900 placeholder-blue-200" placeholder="ESPERANDO LECTURA...">
@@ -70,13 +67,15 @@
                     <p class="text-gray-700 font-bold" id="res_sot">SOT: ---</p>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold text-gray-700">Equipos en Caja</h2>
                     <span id="contador_caja" class="bg-blue-100 text-blue-800 text-xl font-bold px-3 py-1 rounded-full">0</span>
                 </div>
-                <ul id="lista_escaneados" class="space-y-2 h-64 overflow-y-auto mb-4 border-b pb-4"></ul>
-                <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded shadow-lg cursor-pointer">🖨️ Cerrar Caja e Imprimir</button>
+                <ul id="lista_escaneados" class="space-y-2 flex-grow overflow-y-auto mb-4 border-b pb-4 min-h-[250px]"></ul>
+                <button onclick="cerrarCaja()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-4 rounded shadow-lg cursor-pointer transition text-lg">
+                    🖨️ Cerrar Caja e Imprimir
+                </button>
             </div>
         </section>
 
@@ -122,25 +121,16 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY';
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- LÓGICA DEL MENÚ A PRUEBA DE FALLOS ---
+        // --- MENÚ HAMBURGUESA (CORREGIDO) ---
         const sidebar = document.getElementById('sidebar');
-
         function toggleMenu() {
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-            }
+            sidebar.classList.toggle('-translate-x-full');
         }
 
         function cambiarVista(idVista) {
-            document.querySelectorAll('.vista-seccion').forEach(vista => {
-                vista.classList.add('hidden');
-                vista.classList.remove('block');
-            });
+            document.querySelectorAll('.vista-seccion').forEach(vista => vista.classList.add('hidden'));
             document.getElementById(idVista).classList.remove('hidden');
-            document.getElementById(idVista).classList.add('block');
-            sidebar.classList.add('-translate-x-full'); // Cierra el menú
+            sidebar.classList.add('-translate-x-full'); // Cierra el menú automáticamente
         }
 
         function verificarAdmin() {
@@ -153,23 +143,47 @@
             sidebar.classList.add('-translate-x-full');
         }
 
-        // --- FOCUS LOCK CORREGIDO ---
-        const inputLaser = document.getElementById('input_laser');
-        document.addEventListener('click', (e) => {
-            // REGLA DE ORO: Si haces clic en la barra de navegación o en el menú, ignora el Focus Lock.
-            if (e.target.closest('nav') || e.target.closest('#sidebar')) {
+        // --- GENERADOR AUTOMÁTICO DE CAJAS ---
+        let numeroCaja = 1;
+        const inputCaja = document.getElementById('caja_activa');
+        const selectorSede = document.getElementById('sede_selector');
+
+        function actualizarNombreCaja() {
+            const prefijo = selectorSede.value.substring(0,3); // Toma "ARE", "LIM", etc.
+            const num = String(numeroCaja).padStart(3, '0');   // Convierte 1 en "001"
+            inputCaja.value = `${prefijo}-${num}`;
+        }
+
+        selectorSede.addEventListener('change', actualizarNombreCaja);
+        actualizarNombreCaja(); // Ejecutar al cargar la página
+
+        let equiposEnCaja = 0;
+        const listaEscaneados = document.getElementById('lista_escaneados');
+        const contadorCaja = document.getElementById('contador_caja');
+
+        function cerrarCaja() {
+            if (equiposEnCaja === 0) {
+                alert("No puedes cerrar una caja vacía.");
                 return;
             }
+            alert(`✅ La caja ${inputCaja.value} ha sido cerrada y está lista para imprimir.`);
             
-            // Si estás en la consola de pistoleo y no haces clic en un botón o selector, bloquea el láser
-            const vistaPistoleo = document.getElementById('vista_pistoleo');
-            if (!vistaPistoleo.classList.contains('hidden')) {
-                if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
-                    inputLaser.focus();
-                }
-            } else {
-                // Si haces clic fuera en otra pantalla, cierra el menú si estaba abierto
-                sidebar.classList.add('-translate-x-full');
+            // Limpiar la lista para la siguiente caja
+            listaEscaneados.innerHTML = '';
+            equiposEnCaja = 0;
+            contadorCaja.innerText = '0';
+            
+            // Aumentar el correlativo automáticamente
+            numeroCaja++;
+            actualizarNombreCaja();
+            document.getElementById('input_laser').focus();
+        }
+
+        // --- FOCUS LOCK INTELIGENTE (Solo bloquea clics dentro del panel central) ---
+        document.getElementById('vista_pistoleo').addEventListener('click', (e) => {
+            // Si el clic NO fue en un botón, ni en una lista desplegable, ni escribiendo en la caja manual...
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'INPUT') {
+                document.getElementById('input_laser').focus();
             }
         });
 
@@ -191,9 +205,7 @@
         };
 
         // --- LÓGICA DE PISTOLEO ---
-        let equiposEnCaja = 0;
-        const listaEscaneados = document.getElementById('lista_escaneados');
-        const contadorCaja = document.getElementById('contador_caja');
+        const inputLaser = document.getElementById('input_laser');
 
         inputLaser.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
@@ -218,8 +230,12 @@
                     resDiv.classList.add('bg-green-50', 'border-green-500');
                 }
 
+                // Aquí guardamos en Supabase incluyendo el Nombre de la Caja actual
                 const sedeSeleccionada = document.getElementById('sede_selector').value;
-                const { error: insertError } = await supabase.from('equipos_escaneados').insert([{ serie: seriePistoleada, sede: sedeSeleccionada }]);
+                const { error: insertError } = await supabase.from('equipos_escaneados').insert([{ 
+                    serie: seriePistoleada, 
+                    sede: sedeSeleccionada
+                }]);
 
                 if (insertError) {
                     playSound('error'); 
@@ -231,12 +247,12 @@
                     const li = document.createElement('li');
                     li.className = 'text-sm font-mono bg-gray-50 p-2 rounded border flex justify-between';
                     li.innerHTML = `<span class="text-green-600 font-bold">✓ ${seriePistoleada}</span>`;
-                    lista_escaneados.prepend(li); 
+                    listaEscaneados.prepend(li); 
                 }
             }
         });
 
-        // --- SUBIDA DE EXCEL ---
+        // --- SUBIDA DE EXCEL UNIVERSAL ---
         async function procesarExcel(inputId, origenVal, btnId, msgId) {
             const fileInput = document.getElementById(inputId);
             const msgLabel = document.getElementById(msgId);
