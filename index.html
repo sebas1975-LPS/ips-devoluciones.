@@ -309,7 +309,7 @@
             }
         });
 
-        // --- SUBIDA DE EXCEL CON DETECCIÓN DE ERRORES SUPABASE ---
+        // --- SUBIDA DE EXCEL CORREGIDA ---
         async function procesarExcel(inputId, origenVal, btnId, msgId) {
             const fileInput = document.getElementById(inputId);
             const msgLabel = document.getElementById(msgId);
@@ -334,20 +334,29 @@
                         if (nk === 'NUMERO DE SERIE' || nk === 'SERIE' || nk === 'S/N' || nk === 'IMEI') eq_serie = fila[k];
                         if (nk === 'MATERIAL' || nk === 'SKU' || nk === 'CODIGO') eq_sku = fila[k];
                         if (nk === 'DESCRIPCION DEL MATERIAL' || nk === 'MODELO' || nk === 'DESCRIPCION') eq_modelo = fila[k];
-                        if (nk === 'TECNICO' || nk === 'NOMBRE TECNICO' || nk === 'CONTRATA') eq_tecnico = fila[k];
+                        // ¡CORRECCIÓN! Ya NO buscamos la palabra 'CONTRATA'
+                        if (nk === 'TECNICO' || nk === 'NOMBRE TECNICO' || nk === 'NOMBRES' || nk === 'RESPONSABLE') eq_tecnico = fila[k];
                         if (nk === 'SOT' || nk === 'ORDEN') eq_sot = fila[k];
                         if (nk === 'DIAS DE ANTIGUAMIENTO' || nk === 'DIAS' || nk === 'ANTIGUEDAD') eq_dias = fila[k];
                     });
 
-                    return {
+                    // Construimos el paquete de datos base
+                    const payload = {
                         serie: (eq_serie || '').toString().trim().toUpperCase(),
                         sku: (eq_sku || '').toString().trim(),
                         modelo: (eq_modelo || '').toString().trim(),
-                        tecnico_asignado: (eq_tecnico || '').toString().trim(),
                         sot_instalacion: (eq_sot || '').toString().trim(),
-                        dias_antiguedad: parseInt(eq_dias || 0),
-                        origen_reporte: origenVal
+                        origen_reporte: origenVal,
+                        dias_antiguedad: parseInt(eq_dias || 0)
                     };
+
+                    // ¡MAGIA! Solo enviamos el nombre del técnico si el Excel viene de SpaceCom.
+                    // Si el Excel es de Claro, ignoramos al técnico para NO borrar la data que ya teníamos.
+                    if (origenVal.includes('SPACECOM')) {
+                        payload.tecnico_asignado = (eq_tecnico || '').toString().trim();
+                    }
+
+                    return payload;
                 }).filter(f => f.serie !== '');
 
                 if(datosMapeados.length === 0) {
@@ -362,15 +371,12 @@
 
                 for (let i = 0; i < Math.ceil(datosMapeados.length / TAMAÑO_LOTE); i++) {
                     const lote = datosMapeados.slice(i * TAMAÑO_LOTE, (i + 1) * TAMAÑO_LOTE);
-                    
-                    // AQUI ESTÁ EL CAMBIO CLAVE: SI SUPABASE RECHAZA, TE LO GRITARÁ EN PANTALLA
                     const { error } = await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                     
                     if (error) {
-                        alert(`❌ SUPABASE RECHAZÓ LOS DATOS:\n\nMotivo: ${error.message}\n\nRevisa si activaste la seguridad (RLS) en Supabase o si falta alguna columna en la tabla.`);
+                        alert(`❌ SUPABASE RECHAZÓ LOS DATOS:\n\nMotivo: ${error.message}`);
                         msgLabel.innerHTML = `<span class='text-red-600 font-bold'>Error crítico en Base de Datos: ${error.message}</span>`;
-                        huboError = true;
-                        break; // Detiene el proceso por completo
+                        huboError = true; break;
                     }
                 }
                 
