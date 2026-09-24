@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPS Logística - V2.0</title>
+    <title>IPS Logística - V3.0</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase -->
@@ -21,7 +21,7 @@
             <button onclick="toggleMenu()" class="hover:bg-blue-800 p-2 rounded cursor-pointer transition">
                 <svg class="w-8 h-8 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
-            <h1 class="text-2xl font-bold">IPS Logística <span class="text-xs bg-yellow-400 text-blue-900 px-2 py-1 rounded ml-2">V2.0</span></h1>
+            <h1 class="text-2xl font-bold">IPS Logística <span class="text-xs bg-yellow-400 text-blue-900 px-2 py-1 rounded ml-2">V3.0</span></h1>
         </div>
         <div class="flex items-center gap-4">
             <select id="sede_selector" class="text-black rounded px-2 py-1 font-bold outline-none cursor-pointer">
@@ -42,13 +42,11 @@
             <p class="text-xs text-gray-400 font-bold uppercase mt-2 mb-1 px-2 tracking-widest">⏳ Antiguamiento</p>
             <button onclick="cambiarVista('vista_anti_radar')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">🔍 Radar y Reportes</button>
             <button onclick="cambiarVista('vista_anti_spacecom')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">📥 Subir SpaceCom</button>
-            <button onclick="cambiarVista('vista_anti_whatsapp')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">📱 Cobro WhatsApp</button>
+            <button onclick="cambiarVista('vista_anti_whatsapp')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">📱 Reporte WhatsApp</button>
             
-            <!-- SECCIÓN: RECUPERADOS -->
+            <!-- SECCIÓN: RECUPERADOS (Limpio, sin relleno) -->
             <p class="text-xs text-gray-400 font-bold uppercase mt-6 mb-1 px-2 tracking-widest">♻️ Recuperados</p>
-            <button onclick="cambiarVista('vista_recu_radar')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">🔍 Radar y Reportes</button>
-            <button onclick="cambiarVista('vista_recu_spacecom')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">📥 Subir SpaceCom</button>
-            <button onclick="cambiarVista('vista_recu_whatsapp')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">📱 Cobro WhatsApp</button>
+            <button onclick="cambiarVista('vista_recu_radar')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">🔍 Radar de Recuperados</button>
             
             <!-- SECCIÓN: ADMIN -->
             <hr class="border-slate-700 my-6">
@@ -122,11 +120,10 @@
         <!-- ========================================================================= -->
         
         <!-- Radar Antiguamiento -->
-        <section id="vista_anti_radar" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
+        <section id="vista_anti_radar" class="max-w-6xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-yellow-500">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">🔍 Radar: Antiguamiento</h2>
-                    <!-- BOTÓN EXPORTAR EXCEL -->
                     <button onclick="exportarExcel('ANTIGUAMIENTO')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow flex items-center gap-2 transition">
                         📥 Descargar Reporte Excel
                     </button>
@@ -135,14 +132,15 @@
                     <input type="text" id="busqueda_anti" placeholder="Serie, Técnico o SOT..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-2/3 outline-none focus:border-blue-500">
                     <select id="filtro_anti" class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/3 outline-none cursor-pointer">
                         <option value="TODOS">Ver Todos</option>
-                        <option value="ALMACEN">Stock Almacén (Por buscar)</option>
+                        <option value="FALTA_BUSCAR">Falta Buscar (Sin rastreo)</option>
+                        <option value="PISTOLEADO">Confirmado en Almacén (Pistoleado)</option>
                         <option value="TECNICO">En poder de Técnico</option>
                         <option value="SOT">Liquidados en SOT</option>
                     </select>
                 </div>
                 <button onclick="cargarRadar('ANTIGUAMIENTO', 'busqueda_anti', 'filtro_anti', 'tbody_anti')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow mb-6">Realizar Búsqueda</button>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b-2">Serie</th><th class="p-3 border-b-2">Modelo</th><th class="p-3 border-b-2">Ubicación / Estado</th><th class="p-3 border-b-2">Días</th></tr></thead><tbody id="tbody_anti"><tr><td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar...</td></tr></tbody></table>
+                    <table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b-2">SKU (Material)</th><th class="p-3 border-b-2">Modelo (Descripción)</th><th class="p-3 border-b-2">Serie</th><th class="p-3 border-b-2">Estado / Ubicación</th><th class="p-3 border-b-2">Días</th></tr></thead><tbody id="tbody_anti"><tr><td colspan="5" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar...</td></tr></tbody></table>
                 </div>
             </div>
         </section>
@@ -151,10 +149,11 @@
         <section id="vista_anti_spacecom" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-blue-500">
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">📥 Cruce SpaceCom <span class="text-blue-600">(Antiguamiento)</span></h2>
-                <p class="text-gray-600 mb-6 text-sm">Sube tu Excel de SpaceCom. El sistema solo cruzará las series que pertenezcan a Antiguamiento.</p>
+                <p class="text-gray-600 mb-6 text-sm">Sube tu Excel de SpaceCom. Selecciona si es Stock de Almacén, Stock de Técnicos o Historial de SOTs.</p>
                 <select id="tipo_spacecom_anti" class="w-full border-2 p-3 mb-4 font-bold rounded outline-none cursor-pointer">
-                    <option value="TECNICOS">Reporte: Stock de Técnicos</option>
-                    <option value="SOTS">Reporte: Historial SOTs</option>
+                    <option value="ALMACEN">SpaceCom: Stock de Almacén</option>
+                    <option value="TECNICOS">SpaceCom: Stock de Técnicos</option>
+                    <option value="SOTS">SpaceCom: Historial SOTs</option>
                 </select>
                 <input type="file" id="file_anti_spacecom" accept=".xlsx, .csv" class="w-full border-2 border-dashed p-4 mb-4 cursor-pointer">
                 <button onclick="procesarSpaceCom('file_anti_spacecom', 'tipo_spacecom_anti', 'ANTIGUAMIENTO', 'msg_anti_space')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded shadow">Cruzar Datos</button>
@@ -162,10 +161,10 @@
             </div>
         </section>
 
-        <!-- WhatsApp Antiguamiento -->
+        <!-- Reporte WhatsApp Antiguamiento -->
         <section id="vista_anti_whatsapp" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">📱 Cobro Técnicos <span class="text-blue-600">(Antiguamiento)</span></h2>
+                <h2 class="text-2xl font-bold text-gray-800">📱 Reporte WhatsApp Técnicos <span class="text-blue-600">(Antiguamiento)</span></h2>
                 <button onclick="cargarWhatsApp('ANTIGUAMIENTO', 'contenedor_anti_wa')" class="bg-blue-100 text-blue-800 px-4 py-2 rounded font-bold shadow hover:bg-blue-200">🔄 Actualizar</button>
             </div>
             <div id="contenedor_anti_wa" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
@@ -173,57 +172,31 @@
 
 
         <!-- ========================================================================= -->
-        <!-- MÓDULO 3: RECUPERADOS -->
+        <!-- MÓDULO 3: RECUPERADOS (Simplificado y Directo) -->
         <!-- ========================================================================= -->
         
         <!-- Radar Recuperados -->
-        <section id="vista_recu_radar" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
+        <section id="vista_recu_radar" class="max-w-6xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-green-500">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">🔍 Radar: Recuperados</h2>
-                    <!-- BOTÓN EXPORTAR EXCEL -->
                     <button onclick="exportarExcel('RECUPERADO')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow flex items-center gap-2 transition">
                         📥 Descargar Reporte Excel
                     </button>
                 </div>
                 <div class="flex gap-4 mb-6">
-                    <input type="text" id="busqueda_recu" placeholder="Serie, Técnico o SOT..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-2/3 outline-none focus:border-green-500">
+                    <input type="text" id="busqueda_recu" placeholder="Serie o Modelo..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-2/3 outline-none focus:border-green-500">
                     <select id="filtro_recu" class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/3 outline-none cursor-pointer">
                         <option value="TODOS">Ver Todos</option>
-                        <option value="ALMACEN">Stock Almacén (Por buscar)</option>
-                        <option value="TECNICO">En poder de Técnico</option>
-                        <option value="SOT">Liquidados en SOT</option>
+                        <option value="FALTA_BUSCAR">Falta Buscar (Sin rastreo)</option>
+                        <option value="PISTOLEADO">Confirmado en Almacén (Pistoleado)</option>
                     </select>
                 </div>
                 <button onclick="cargarRadar('RECUPERADO', 'busqueda_recu', 'filtro_recu', 'tbody_recu')" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow mb-6">Realizar Búsqueda</button>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b-2">Serie</th><th class="p-3 border-b-2">Modelo</th><th class="p-3 border-b-2">Ubicación / Estado</th><th class="p-3 border-b-2">-</th></tr></thead><tbody id="tbody_recu"><tr><td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar...</td></tr></tbody></table>
+                    <table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b-2">SKU (Material)</th><th class="p-3 border-b-2">Modelo (Descripción)</th><th class="p-3 border-b-2">Serie</th><th class="p-3 border-b-2">Estado / Ubicación</th></tr></thead><tbody id="tbody_recu"><tr><td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar...</td></tr></tbody></table>
                 </div>
             </div>
-        </section>
-
-        <!-- Carga SpaceCom Recuperados -->
-        <section id="vista_recu_spacecom" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
-            <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-green-500">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">📥 Cruce SpaceCom <span class="text-green-600">(Recuperados)</span></h2>
-                <p class="text-gray-600 mb-6 text-sm">Sube tu Excel de SpaceCom. El sistema solo cruzará las series que pertenezcan a Recuperados.</p>
-                <select id="tipo_spacecom_recu" class="w-full border-2 p-3 mb-4 font-bold rounded outline-none cursor-pointer">
-                    <option value="TECNICOS">Reporte: Stock de Técnicos</option>
-                    <option value="SOTS">Reporte: Historial SOTs</option>
-                </select>
-                <input type="file" id="file_recu_spacecom" accept=".xlsx, .csv" class="w-full border-2 border-dashed p-4 mb-4 cursor-pointer">
-                <button onclick="procesarSpaceCom('file_recu_spacecom', 'tipo_spacecom_recu', 'RECUPERADO', 'msg_recu_space')" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded shadow">Cruzar Datos</button>
-                <p id="msg_recu_space" class="mt-4 text-center font-bold"></p>
-            </div>
-        </section>
-
-        <!-- WhatsApp Recuperados -->
-        <section id="vista_recu_whatsapp" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">📱 Cobro Técnicos <span class="text-green-600">(Recuperados)</span></h2>
-                <button onclick="cargarWhatsApp('RECUPERADO', 'contenedor_recu_wa')" class="bg-green-100 text-green-800 px-4 py-2 rounded font-bold shadow hover:bg-green-200">🔄 Actualizar</button>
-            </div>
-            <div id="contenedor_recu_wa" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </section>
 
 
@@ -233,7 +206,7 @@
         <section id="vista_admin" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-red-600 mb-8">
                 <h2 class="text-2xl font-bold text-red-800 mb-2">⚙️ Crear Master: ANTIGUAMIENTO</h2>
-                <p class="mb-4 text-gray-600 text-sm">Sube la data en bruto de Claro. El sistema purgará automáticamente los menores de 40 días.</p>
+                <p class="mb-4 text-gray-600 text-sm">Sube la data en bruto de Claro. El sistema purgará automáticamente los menores a 40 días.</p>
                 <input type="file" id="file_admin_anti" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-red-300 bg-red-50 p-4 mb-4 cursor-pointer">
                 <button onclick="procesarAdmin('file_admin_anti', 'ANTIGUAMIENTO', 'msg_admin_anti')" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-4 rounded shadow">Crear Base Antiguamiento</button>
                 <p id="msg_admin_anti" class="mt-4 text-center font-bold"></p>
@@ -241,7 +214,7 @@
 
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-green-600">
                 <h2 class="text-2xl font-bold text-green-800 mb-2">⚙️ Crear Master: RECUPERADOS</h2>
-                <p class="mb-4 text-gray-600 text-sm">Sube la data en bruto de Recuperados enviada por Claro.</p>
+                <p class="mb-4 text-gray-600 text-sm">Sube el reporte bruto de recuperados enviado por Claro.</p>
                 <input type="file" id="file_admin_recu" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-green-300 bg-green-50 p-4 mb-4 cursor-pointer">
                 <button onclick="procesarAdmin('file_admin_recu', 'RECUPERADO', 'msg_admin_recu')" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-4 rounded shadow">Crear Base Recuperados</button>
                 <p id="msg_admin_recu" class="mt-4 text-center font-bold"></p>
@@ -251,7 +224,7 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MOTOR JAVASCRIPT Y LÓGICA V2.0 -->
+    <!-- MOTOR JAVASCRIPT Y LÓGICA V3.0 -->
     <!-- ========================================================================= -->
     <script>
         // 1. CONEXIÓN SUPABASE
@@ -310,7 +283,7 @@
             } catch(err) {}
         };
 
-        // 5. PISTOLEO ESTRICTO V2.0
+        // 5. PISTOLEO ESTRICTO V3.0 (Registra pistoleo físico para actualizar estado)
         const inputLaser = document.getElementById('input_laser');
         const msgVal = document.getElementById('msg_validacion');
         const resDiv = document.getElementById('resultado_cruce');
@@ -323,15 +296,13 @@
                 inputLaser.value = ''; 
                 if(!serie) return;
 
-                msgVal.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800');
-                msgVal.classList.add('bg-blue-100', 'text-blue-800');
+                msgVal.className = 'mt-4 text-center font-bold text-lg p-3 rounded shadow-sm bg-blue-100 text-blue-800 block';
                 msgVal.innerText = `Buscando serie en ${tipoFlujo}...`;
                 resDiv.classList.add('hidden');
 
-                // Validamos contra la BD usando el Tipo de Flujo seleccionado
+                // Validamos contra la BD
                 const { data: equipoDB, error: errDB } = await db.from('cruce_spacecom').select('*').eq('serie', serie).eq('tipo_flujo', tipoFlujo).single();
                 
-                // Si la serie NO pertenece a ese flujo o no existe
                 if (!equipoDB || errDB) {
                     playSound('error');
                     msgVal.className = 'mt-4 text-center font-bold text-lg p-3 rounded shadow-sm bg-red-100 text-red-800 block';
@@ -339,25 +310,15 @@
                     return;
                 }
 
-                // Si existe y es válido
-                msgVal.className = 'mt-4 text-center font-bold text-lg p-3 rounded shadow-sm bg-green-100 text-green-800 block';
-                msgVal.innerText = `✅ EQUIPO VÁLIDO (${tipoFlujo})`;
+                // SI EXISTE: Actualizamos en la BD que este equipo YA FUE PISTOLEADO (confirmado en almacén)
+                await db.from('cruce_spacecom').update({ pistoleado: true }).eq('serie', serie).eq('tipo_flujo', tipoFlujo);
 
-                resDiv.className = 'mt-4 p-4 rounded-lg border-l-4 shadow-sm block ';
+                msgVal.className = 'mt-4 text-center font-bold text-lg p-3 rounded shadow-sm bg-green-100 text-green-800 block';
+                msgVal.innerText = `✅ EQUIPO VÁLIDO Y CONFIRMADO EN ALMACÉN`;
+
+                resDiv.className = 'mt-4 p-4 rounded-lg border-l-4 shadow-sm block bg-green-50 border-green-500';
                 document.getElementById('res_serie').innerText = `Serie: ${serie} ${equipoDB.dias_antiguedad ? '('+equipoDB.dias_antiguedad+' Días)' : ''}`;
-                
-                let ubicacionTexto = '';
-                if (equipoDB.tecnico_asignado) {
-                    ubicacionTexto = `Técnico: ${equipoDB.tecnico_asignado}`;
-                    resDiv.classList.add('bg-red-50', 'border-red-500'); 
-                } else if (equipoDB.sot_instalacion) {
-                    ubicacionTexto = `SOT Liquidada: ${equipoDB.sot_instalacion}`;
-                    resDiv.classList.add('bg-yellow-50', 'border-yellow-500'); 
-                } else {
-                    ubicacionTexto = `Stock Almacén (Por Despachar)`;
-                    resDiv.classList.add('bg-green-50', 'border-green-500');
-                }
-                document.getElementById('res_ubicacion').innerText = ubicacionTexto;
+                document.getElementById('res_ubicacion').innerText = `Ubicación: CONFIRMADO EN ALMACÉN (Pistoleado)`;
 
                 // Guardar lectura en escaneados
                 await db.from('equipos_escaneados').insert([{ serie: serie, sede: document.getElementById('sede_selector').value, tipo: tipoFlujo }]);
@@ -370,29 +331,23 @@
             }
         });
 
-        // =========================================================================
-        // 6. NUEVA FUNCIÓN: EXPORTAR A EXCEL (SUPERVISOR)
-        // =========================================================================
+        // 6. EXPORTAR A EXCEL (SUPERVISOR)
         async function exportarExcel(tipoFlujo) {
             alert(`Generando reporte Excel de ${tipoFlujo}. Por favor espere un momento...`);
-            
-            // Traer todos los equipos de la BD según el tipo
             const { data, error } = await db.from('cruce_spacecom').select('*').eq('tipo_flujo', tipoFlujo);
             
-            if (error || !data || data.length === 0) {
-                return alert("No hay datos para exportar.");
-            }
+            if (error || !data || data.length === 0) return alert("No hay datos para exportar.");
 
-            // Formatear los datos para que el Excel sea limpio y útil para el supervisor
             const datosParaExcel = data.map(eq => {
-                let ubicacion = "STOCK ALMACÉN";
+                let ubicacion = "FALTA BUSCAR";
+                if (eq.pistoleado) ubicacion = "CONFIRMADO EN ALMACÉN (Pistoleado)";
                 if (eq.tecnico_asignado) ubicacion = `TÉCNICO: ${eq.tecnico_asignado}`;
                 else if (eq.sot_instalacion) ubicacion = `SOT: ${eq.sot_instalacion}`;
 
                 return {
-                    "SERIE": eq.serie,
                     "SKU": eq.sku || '',
                     "MODELO": eq.modelo || '',
+                    "SERIE": eq.serie,
                     "ESTADO / UBICACIÓN": ubicacion,
                     "TÉCNICO ASIGNADO": eq.tecnico_asignado || '',
                     "SOT LIQUIDADA": eq.sot_instalacion || '',
@@ -401,19 +356,14 @@
                 };
             });
 
-            // Convertir JSON a Hoja de Excel usando SheetJS
             const worksheet = XLSX.utils.json_to_sheet(datosParaExcel);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
-
-            // Generar y descargar el archivo
             const fecha = new Date().toISOString().split('T')[0];
             XLSX.writeFile(workbook, `Reporte_Supervisor_${tipoFlujo}_${fecha}.xlsx`);
         }
 
-        // =========================================================================
         // 7. LECTURA DE EXCEL (ADMIN Y SPACECOM MODULAR)
-        // =========================================================================
         const normalizeKey = (key) => key.toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
         async function procesarAdmin(inputId, tipoFlujo, msgId) {
@@ -438,12 +388,11 @@
                     });
 
                     const diasNum = parseInt(eq_dias || 0);
-                    // REGLA CLARO: Si es antiguamiento, purgar < 40 días. Si es recuperado, pasa directo.
                     if (eq_serie && (tipoFlujo === 'RECUPERADO' || diasNum >= 40)) {
                         datosMaestros.push({
                             serie: eq_serie.toString().trim().toUpperCase(),
                             sku: eq_sku.toString().trim(), modelo: eq_modelo.toString().trim(),
-                            dias_antiguedad: diasNum, tipo_flujo: tipoFlujo
+                            dias_antiguedad: diasNum, tipo_flujo: tipoFlujo, pistoleado: false
                         });
                     }
                 });
@@ -462,11 +411,10 @@
 
         async function procesarSpaceCom(inputId, selectId, tipoFlujo, msgId) {
             const fileInput = document.getElementById(inputId); const msgLabel = document.getElementById(msgId);
-            const tipoReporte = document.getElementById(selectId).value; // TECNICOS o SOTS
+            const tipoReporte = document.getElementById(selectId).value; // ALMACEN, TECNICOS, SOTS
             const file = fileInput.files[0]; if (!file) return alert("Selecciona un archivo");
             msgLabel.innerHTML = "<span class='text-blue-600'>Cruzando con BD...</span>";
             
-            // Traer SOLO las series de la base maestra que coincidan con el tipo de flujo actual
             const { data: dbData } = await db.from('cruce_spacecom').select('serie').eq('tipo_flujo', tipoFlujo);
             const seriesMaestras = new Set(dbData.map(d => d.serie));
 
@@ -486,10 +434,15 @@
                     });
 
                     const sl = (eq_serie||'').toString().trim().toUpperCase(); const vl = (eq_valor||'').toString().trim();
-                    // CRUCE ESTRICTO: Solo actualizar si la serie ya está en la Base Maestra de este flujo
-                    if (sl && seriesMaestras.has(sl) && vl) {
-                        if(tipoReporte === 'TECNICOS') actualizaciones.push({ serie: sl, tecnico_asignado: vl, tipo_flujo: tipoFlujo });
-                        else actualizaciones.push({ serie: sl, sot_instalacion: vl, tipo_flujo: tipoFlujo });
+                    
+                    if (sl && seriesMaestras.has(sl)) {
+                        if (tipoReporte === 'ALMACEN') {
+                            actualizaciones.push({ serie: sl, pistoleado: true, tipo_flujo: tipoFlujo });
+                        } else if (tipoReporte === 'TECNICOS' && vl) {
+                            actualizaciones.push({ serie: sl, tecnico_asignado: vl, tipo_flujo: tipoFlujo });
+                        } else if (tipoReporte === 'SOTS' && vl) {
+                            actualizaciones.push({ serie: sl, sot_instalacion: vl, tipo_flujo: tipoFlujo });
+                        }
                     }
                 });
 
@@ -503,55 +456,58 @@
             }; reader.readAsArrayBuffer(file);
         }
 
-        // 8. RADARES MODULARES
+        // 8. RADARES MODULARES (Con soporte para Estado Real)
         async function cargarRadar(tipoFlujo, inputId, filtroId, tbodyId) {
             const termino = document.getElementById(inputId).value.trim().toUpperCase();
             const filtro = document.getElementById(filtroId).value;
             const tbody = document.getElementById(tbodyId);
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-blue-600">Buscando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-blue-600">Buscando...</td></tr>';
 
             let query = db.from('cruce_spacecom').select('*').eq('tipo_flujo', tipoFlujo).limit(500);
-            if (termino) query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,sot_instalacion.ilike.%${termino}%`);
+            if (termino) query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,sot_instalacion.ilike.%${termino}%,modelo.ilike.%${termino}%`);
             
-            if (filtro === 'ALMACEN') query = query.or('tecnico_asignado.is.null,tecnico_asignado.eq.').or('sot_instalacion.is.null,sot_instalacion.eq.');
+            if (filtro === 'FALTA_BUSCAR') query = query.eq('pistoleado', false).or('tecnico_asignado.is.null,tecnico_asignado.eq.').or('sot_instalacion.is.null,sot_instalacion.eq.');
+            else if (filtro === 'PISTOLEADO') query = query.eq('pistoleado', true);
             else if (filtro === 'TECNICO') query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
             else if (filtro === 'SOT') query = query.not('sot_instalacion', 'is', null).neq('sot_instalacion', '');
 
             const { data } = await query;
-            if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-gray-500">Sin resultados.</td></tr>';
+            if (!data || data.length === 0) return tbody.innerHTML = `<tr><td colspan="${tipoFlujo==='ANTIGUAMIENTO'?5:4}" class="text-center p-6 text-gray-500">Sin resultados.</td></tr>`;
 
             tbody.innerHTML = '';
             data.forEach(eq => {
-                let ubicacion = '-';
-                if(!eq.tecnico_asignado && !eq.sot_instalacion) ubicacion = '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN</span>';
-                else if (eq.tecnico_asignado) ubicacion = `<span class="font-bold text-gray-700">TÉCNICO: </span>${eq.tecnico_asignado}`;
+                let ubicacion = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR EN ESTANTE</span>';
+                if (eq.pistoleado) ubicacion = '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">CONFIRMADO EN ALMACÉN (Pistoleado)</span>';
+                if (eq.tecnico_asignado) ubicacion = `<span class="font-bold text-gray-700">TÉCNICO: </span>${eq.tecnico_asignado}`;
                 else if (eq.sot_instalacion) ubicacion = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">SOT: ${eq.sot_instalacion}</span>`;
 
                 const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50';
-                tr.innerHTML = `<td class="p-3 font-mono font-bold">${eq.serie}</td><td class="p-3 text-sm">${eq.modelo || '-'}</td><td class="p-3">${ubicacion}</td><td class="p-3 text-red-600 font-bold">${eq.dias_antiguedad || 0}</td>`;
+                
+                if (tipoFlujo === 'ANTIGUAMIENTO') {
+                    tr.innerHTML = `<td class="p-3 text-sm text-gray-600">${eq.sku || '-'}</td><td class="p-3 text-sm">${eq.modelo || '-'}</td><td class="p-3 font-mono font-bold">${eq.serie}</td><td class="p-3">${ubicacion}</td><td class="p-3 text-red-600 font-bold">${eq.dias_antiguedad || 0}</td>`;
+                } else {
+                    tr.innerHTML = `<td class="p-3 text-sm text-gray-600">${eq.sku || '-'}</td><td class="p-3 text-sm">${eq.modelo || '-'}</td><td class="p-3 font-mono font-bold">${eq.serie}</td><td class="p-3">${ubicacion}</td>`;
+                }
                 tbody.appendChild(tr);
             });
         }
 
-        // 9. REPORTE WHATSAPP MODULAR
+        // 9. REPORTE WHATSAPP (Antiguamiento)
         async function cargarWhatsApp(tipoFlujo, contenedorId) {
             const contenedor = document.getElementById(contenedorId);
             contenedor.innerHTML = '<p class="text-blue-500 font-bold col-span-2 text-center">Generando tarjetas...</p>';
 
-            // Traer equipos de este flujo, que tengan técnico, pero que NO tengan SOT.
             const { data } = await db.from('cruce_spacecom').select('*').eq('tipo_flujo', tipoFlujo).not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '').or('sot_instalacion.is.null,sot_instalacion.eq.');
             if(!data || data.length === 0) return contenedor.innerHTML = '<p class="text-gray-500 text-center col-span-2">No hay equipos pendientes con técnicos para este módulo.</p>';
 
             const agrupado = {};
             data.forEach(item => { if(!agrupado[item.tecnico_asignado]) agrupado[item.tecnico_asignado] = []; agrupado[item.tecnico_asignado].push(item); });
 
-            let colorTema = tipoFlujo === 'ANTIGUAMIENTO' ? 'blue' : 'green';
-
             contenedor.innerHTML = '';
             for (const [tecnico, equipos] of Object.entries(agrupado)) {
                 const cardId = 'wa_' + tipoFlujo + '_' + tecnico.replace(/[^a-zA-Z0-9]/g, '');
                 let htmlEquipos = equipos.map(eq => `<div class="flex justify-between border-b py-1"><span class="font-mono text-sm font-bold text-gray-800">${eq.serie}</span><span class="text-xs text-red-600 font-bold">${eq.dias_antiguedad ? eq.dias_antiguedad + ' Días' : ''}</span></div>`).join('');
-                contenedor.innerHTML += `<div class="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col"><div id="${cardId}" class="p-4 bg-white"><div class="bg-${colorTema}-900 text-white p-3 rounded text-center mb-3"><h3 class="font-bold uppercase">${tecnico}</h3><p class="text-xs text-${colorTema}-200">Equipos: ${equipos.length}</p></div><div class="space-y-1 mb-2 max-h-40 overflow-y-auto">${htmlEquipos}</div><p class="text-center text-xs font-bold text-gray-500 mt-2 border-t pt-2 uppercase">Devolución Obligatoria (${tipoFlujo})</p></div><div class="bg-gray-50 p-3 border-t"><button onclick="copiarComoImagen('${cardId}')" class="w-full bg-${colorTema}-600 hover:bg-${colorTema}-700 text-white font-bold py-2 rounded shadow cursor-pointer">📸 Copiar para WhatsApp</button></div></div>`;
+                contenedor.innerHTML += `<div class="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col"><div id="${cardId}" class="p-4 bg-white"><div class="bg-blue-900 text-white p-3 rounded text-center mb-3"><h3 class="font-bold uppercase">${tecnico}</h3><p class="text-xs text-blue-200">Equipos: ${equipos.length}</p></div><div class="space-y-1 mb-2 max-h-40 overflow-y-auto">${htmlEquipos}</div><p class="text-center text-xs font-bold text-gray-500 mt-2 border-t pt-2 uppercase">Devolución Obligatoria (Antiguamiento)</p></div><div class="bg-gray-50 p-3 border-t"><button onclick="copiarComoImagen('${cardId}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow cursor-pointer">📸 Copiar para WhatsApp</button></div></div>`;
             }
         }
         async function copiarComoImagen(elementId) {
