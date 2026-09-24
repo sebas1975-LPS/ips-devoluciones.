@@ -39,7 +39,6 @@
             <button onclick="cambiarVista('vista_carga_almacen')" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition">📥 Cargar Data (Almacén)</button>
             <button onclick="cargarReporteTecnicos()" class="text-left px-4 py-3 hover:bg-blue-600 rounded font-bold transition">📱 Reporte Técnicos (WhatsApp)</button>
             <hr class="border-slate-600 my-2">
-            <!-- Ahora llama al nuevo modal visual en lugar de la alerta fea -->
             <button onclick="abrirModalAdmin()" class="text-left px-4 py-3 hover:bg-red-600 rounded font-bold text-red-300 transition flex justify-between">
                 <span>⚙️ Admin Claro</span>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
@@ -110,6 +109,8 @@
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-blue-500">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">📥 Carga de Datos - Almacén</h2>
                 <select id="origen_almacen" class="w-full border-2 p-3 mb-4 font-bold rounded outline-none cursor-pointer">
+                    <!-- NUEVA OPCIÓN AGREGADA AQUÍ -->
+                    <option value="SPACECOM_STOCK_ALMACEN">SpaceCom: Stock de Almacén</option>
                     <option value="SPACECOM_STOCK_TECNICO">SpaceCom: Stock de Técnicos</option>
                     <option value="SPACECOM_SOTS">SpaceCom: Historial SOTs</option>
                 </select>
@@ -159,17 +160,17 @@
             sidebar.classList.add('-translate-x-full'); 
         }
 
-        // --- NUEVO: LÓGICA DEL MODAL DE CONTRASEÑA ---
+        // --- 3. LÓGICA DEL MODAL DE CONTRASEÑA ---
         const modalAdmin = document.getElementById('modal_admin');
         const inputPassAdmin = document.getElementById('input_pass_admin');
         const errorPassAdmin = document.getElementById('error_pass_admin');
 
         function abrirModalAdmin() {
-            sidebar.classList.add('-translate-x-full'); // Cierra el menú al abrir
+            sidebar.classList.add('-translate-x-full'); 
             modalAdmin.classList.remove('hidden');
             inputPassAdmin.value = '';
             errorPassAdmin.classList.add('hidden');
-            setTimeout(() => inputPassAdmin.focus(), 100); // Autoselecciona la caja de clave
+            setTimeout(() => inputPassAdmin.focus(), 100); 
         }
 
         function cerrarModalAdmin() {
@@ -187,12 +188,11 @@
             }
         }
 
-        // Permite presionar "Enter" dentro de la ventana de clave
         inputPassAdmin.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') validarPasswordAdmin();
         });
 
-        // --- 3. CORRELATIVO AUTOMÁTICO DE CAJAS ---
+        // --- 4. CORRELATIVO AUTOMÁTICO DE CAJAS ---
         let numeroCaja = 1;
         const inputCaja = document.getElementById('caja_activa');
         const selectorSede = document.getElementById('sede_selector');
@@ -206,7 +206,7 @@
         selectorSede.addEventListener('change', actualizarNombreCaja);
         actualizarNombreCaja(); 
 
-        // --- 4. FUNCIÓN CERRAR CAJA ---
+        // --- 5. FUNCIÓN CERRAR CAJA ---
         let equiposEnCaja = 0;
         
         function cerrarCaja() {
@@ -225,9 +225,8 @@
             document.getElementById('input_laser').focus();
         }
 
-        // --- 5. FOCUS LOCK INTELIGENTE ---
+        // --- 6. FOCUS LOCK INTELIGENTE ---
         document.getElementById('vista_pistoleo').addEventListener('click', (e) => {
-            // Si el modal está abierto, no robar el cursor
             if (!modalAdmin.classList.contains('hidden')) return;
 
             const tag = e.target.tagName;
@@ -236,7 +235,7 @@
             }
         });
 
-        // --- 6. EFECTOS DE SONIDO ---
+        // --- 7. EFECTOS DE SONIDO ---
         const playSound = (type) => {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -255,7 +254,7 @@
             } catch(err) { console.log("Audio bloqueado"); }
         };
 
-        // --- 7. LÓGICA DE PISTOLEO ---
+        // --- 8. LÓGICA DE PISTOLEO ---
         const inputLaser = document.getElementById('input_laser');
 
         inputLaser.addEventListener('keypress', async (e) => {
@@ -303,7 +302,7 @@
             }
         });
 
-        // --- 8. SUBIDA MASIVA DE EXCEL ---
+        // --- 9. SUBIDA MASIVA DE EXCEL ---
         async function procesarExcel(inputId, origenVal, btnId, msgId) {
             const fileInput = document.getElementById(inputId);
             const msgLabel = document.getElementById(msgId);
@@ -347,7 +346,7 @@
             procesarExcel('input_excel_admin', 'CLARO_ANTIGUAMIENTO', 'btn_subir_admin', 'msg_admin');
         });
 
-        // --- 9. REPORTE PARA WHATSAPP ---
+        // --- 10. REPORTE PARA WHATSAPP ---
         async function cargarReporteTecnicos() {
             cambiarVista('vista_reporte_tecnicos');
             const contenedor = document.getElementById('contenedor_tecnicos');
