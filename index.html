@@ -102,7 +102,7 @@
             </div>
         </section>
 
-        <!-- VISTA 2: INVENTARIO Y BÚSQUEDA (NUEVA) -->
+        <!-- VISTA 2: INVENTARIO Y BÚSQUEDA -->
         <section id="vista_inventario" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-yellow-500">
                 <div class="flex justify-between items-center mb-6">
@@ -110,11 +110,13 @@
                 </div>
                 
                 <div class="flex gap-4 mb-6">
-                    <input type="text" id="input_busqueda_inv" placeholder="Escribe una Serie, Modelo o Técnico..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-2/3 outline-none focus:border-blue-500">
-                    <select id="filtro_estado_inv" class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/3 outline-none cursor-pointer">
+                    <input type="text" id="input_busqueda_inv" placeholder="Escribe una Serie, Modelo o Técnico..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/2 outline-none focus:border-blue-500">
+                    <select id="filtro_estado_inv" class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/2 outline-none cursor-pointer">
                         <option value="TODOS">Ver Todos</option>
-                        <option value="ALMACEN">Solo Stock Almacén (Por buscar)</option>
+                        <option value="ALMACEN">Solo Stock Almacén</option>
                         <option value="TECNICO">En poder de Técnico</option>
+                        <!-- NUEVO FILTRO PARA VER SOLO LO DEL ADMIN -->
+                        <option value="CLARO">Solo Reporte Claro (Admin)</option>
                     </select>
                 </div>
                 
@@ -350,7 +352,7 @@
         document.getElementById('btn_subir_almacen').addEventListener('click', () => { procesarExcel('input_excel_almacen', document.getElementById('origen_almacen').value, 'btn_subir_almacen', 'msg_almacen'); });
         document.getElementById('btn_subir_admin').addEventListener('click', () => { procesarExcel('input_excel_admin', 'CLARO_ANTIGUAMIENTO', 'btn_subir_admin', 'msg_admin'); });
 
-        // --- LÓGICA DE BÚSQUEDA / INVENTARIO ---
+        // --- LÓGICA DE BÚSQUEDA / INVENTARIO ACTUALIZADA ---
         async function cargarInventario() {
             const termino = document.getElementById('input_busqueda_inv').value.trim().toUpperCase();
             const filtro = document.getElementById('filtro_estado_inv').value;
@@ -358,19 +360,19 @@
             
             tbody.innerHTML = '<tr><td colspan="4" class="text-center p-6 text-blue-600 font-bold">Cargando base de datos...</td></tr>';
 
-            // Construir la consulta a Supabase
             let query = db.from('cruce_spacecom').select('*').limit(500);
 
-            // Filtro por texto
             if (termino) {
                 query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,modelo.ilike.%${termino}%`);
             }
 
-            // Filtro por estado (Almacén vs Técnico)
+            // APLICACIÓN DE FILTROS INCLUYENDO EL DE CLARO ADMIN
             if (filtro === 'ALMACEN') {
                 query = query.or('tecnico_asignado.is.null,tecnico_asignado.eq.');
             } else if (filtro === 'TECNICO') {
                 query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
+            } else if (filtro === 'CLARO') {
+                query = query.eq('origen_reporte', 'CLARO_ANTIGUAMIENTO');
             }
 
             const { data, error } = await query;
@@ -385,16 +387,25 @@
                 return;
             }
 
-            // Dibujar la tabla
             tbody.innerHTML = '';
             data.forEach(eq => {
                 const esAlmacen = !eq.tecnico_asignado || eq.tecnico_asignado.trim() === '';
-                const textoTecnico = esAlmacen ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN</span>' : eq.tecnico_asignado;
+                let textoTecnico = eq.tecnico_asignado;
+                
+                if(esAlmacen) {
+                    textoTecnico = '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN</span>';
+                }
+
+                // Resaltamos visualmente si viene del reporte de Claro
+                let badgeClaro = '';
+                if(eq.origen_reporte === 'CLARO_ANTIGUAMIENTO') {
+                    badgeClaro = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold block mt-1">DATA ADMIN (CLARO)</span>';
+                }
                 
                 const tr = document.createElement('tr');
                 tr.className = 'border-b hover:bg-gray-50';
                 tr.innerHTML = `
-                    <td class="p-3 font-mono font-bold text-gray-800">${eq.serie}</td>
+                    <td class="p-3 font-mono font-bold text-gray-800">${eq.serie} ${badgeClaro}</td>
                     <td class="p-3 text-gray-600 text-sm">${eq.modelo || '-'}</td>
                     <td class="p-3">${textoTecnico}</td>
                     <td class="p-3 text-xs text-gray-400">${eq.origen_reporte || '-'}</td>
@@ -403,7 +414,6 @@
             });
         }
 
-        // Permite presionar Enter en el buscador de inventario
         document.getElementById('input_busqueda_inv').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') cargarInventario();
         });
