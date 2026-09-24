@@ -121,7 +121,7 @@
                     <input type="text" id="busqueda_anti" placeholder="Serie, Técnico o SOT..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-2/3 outline-none focus:border-blue-500">
                     <select id="filtro_anti" class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/3 outline-none cursor-pointer">
                         <option value="TODOS">Ver Todos</option>
-                        <option value="FALTA_BUSCAR">Falta Buscar (Sin rastreo)</option>
+                        <option value="ALMACEN">En Almacén</option>
                         <option value="TECNICO">En poder de Técnico</option>
                         <option value="SOT">Liquidados en SOT</option>
                     </select>
@@ -143,7 +143,7 @@
                     <option value="SOTS">SpaceCom: Historial SOTs</option>
                 </select>
                 <input type="file" id="file_anti_spacecom" accept=".xlsx, .csv" class="w-full border-2 border-dashed p-4 mb-4 cursor-pointer">
-                <button onclick="procesarSpaceCom('file_anti_spacecom', 'tipo_spacecom_anti', 'ANTIGUAMIENTO', 'msg_anti_space')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded shadow">Cruzar Datos</button>
+                <button onclick="procesarSpaceCom('file_anti_spacecom', 'tipo_spacecom_anti', 'ANTIGUAMIENTO', 'msg_anti_space')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded shadow">Cruzar Series</button>
                 <p id="msg_anti_space" class="mt-4 text-center font-bold"></p>
             </div>
         </section>
@@ -179,16 +179,18 @@
         <!-- VISTA 4: ADMIN CLARO -->
         <section id="vista_admin" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-red-600 mb-8">
-                <h2 class="text-2xl font-bold text-red-800 mb-2">⚙️ Crear Master: ANTIGUAMIENTO</h2>
+                <h2 class="text-2xl font-bold text-red-800 mb-2">⚙️ Carga Supervisor: ANTIGUAMIENTO</h2>
+                <p class="mb-4 text-gray-600 text-sm">Sube la data oficial de Claro. Extraerá Ciudad, SKU, Modelo y Serie (>40 días).</p>
                 <input type="file" id="file_admin_anti" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-red-300 bg-red-50 p-4 mb-4 cursor-pointer">
-                <button onclick="procesarAdmin('file_admin_anti', 'ANTIGUAMIENTO', 'msg_admin_anti')" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-4 rounded shadow">Crear Base Antiguamiento</button>
+                <button onclick="procesarAdmin('file_admin_anti', 'ANTIGUAMIENTO', 'msg_admin_anti')" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-4 rounded shadow">Procesar Data Supervisor</button>
                 <p id="msg_admin_anti" class="mt-4 text-center font-bold"></p>
             </div>
 
             <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-green-600">
-                <h2 class="text-2xl font-bold text-green-800 mb-2">⚙️ Crear Master: RECUPERADOS</h2>
+                <h2 class="text-2xl font-bold text-green-800 mb-2">⚙️ Carga Supervisor: RECUPERADOS</h2>
+                <p class="mb-4 text-gray-600 text-sm">Sube el reporte oficial de recuperados enviado por Claro.</p>
                 <input type="file" id="file_admin_recu" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-green-300 bg-green-50 p-4 mb-4 cursor-pointer">
-                <button onclick="procesarAdmin('file_admin_recu', 'RECUPERADO', 'msg_admin_recu')" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-4 rounded shadow">Crear Base Recuperados</button>
+                <button onclick="procesarAdmin('file_admin_recu', 'RECUPERADO', 'msg_admin_recu')" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-4 rounded shadow">Procesar Data Recuperados</button>
                 <p id="msg_admin_recu" class="mt-4 text-center font-bold"></p>
             </div>
         </section>
@@ -284,7 +286,7 @@
                 resDiv.className = 'mt-4 p-4 rounded-lg border-l-4 shadow-sm block bg-green-50 border-green-500';
                 document.getElementById('res_serie').innerText = `Serie: ${serie} ${equipoDB.dias_antiguedad ? '('+equipoDB.dias_antiguedad+' Días)' : ''}`;
                 
-                let ubicacion = "FALTA BUSCAR EN ESTANTE";
+                let ubicacion = "EN ALMACÉN";
                 if(equipoDB.tecnico_asignado) ubicacion = `Técnico: ${equipoDB.tecnico_asignado}`;
                 else if(equipoDB.sot_instalacion) ubicacion = `SOT: ${equipoDB.sot_instalacion}`;
                 document.getElementById('res_ubicacion').innerText = `Ubicación: ${ubicacion}`;
@@ -307,7 +309,7 @@
             if (error || !data || data.length === 0) return alert(`No hay datos registrados para ${sedeActual}.`);
 
             const datosParaExcel = data.map(eq => {
-                let ubicacion = "FALTA BUSCAR EN ESTANTE";
+                let ubicacion = "EN ALMACÉN";
                 if(eq.tecnico_asignado) ubicacion = `TÉCNICO: ${eq.tecnico_asignado}`;
                 else if(eq.sot_instalacion) ubicacion = `SOT: ${eq.sot_instalacion}`;
 
@@ -330,11 +332,11 @@
 
         const normalizeKey = (key) => key.toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-        // PROCESAR ADMIN
+        // 1. CARGA SUPERVISOR (Extrae Ciudad, SKU, Modelo y Serie)
         async function procesarAdmin(inputId, tipoFlujo, msgId) {
             const fileInput = document.getElementById(inputId); const msgLabel = document.getElementById(msgId);
             const file = fileInput.files[0]; if (!file) return alert("Selecciona un archivo");
-            msgLabel.innerHTML = "<span class='text-blue-600'>Procesando Master...</span>";
+            msgLabel.innerHTML = "<span class='text-blue-600'>Procesando Master del Supervisor...</span>";
             
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -361,70 +363,104 @@
                             modelo: eq_modelo.toString().trim(),
                             dias_antiguedad: diasNum, 
                             tipo_flujo: tipoFlujo,
-                            ciudad: (eq_ciudad || 'AREQUIPA').toString().trim().toUpperCase()
+                            ciudad: (eq_ciudad || 'AREQUIPA').toString().trim().toUpperCase(),
+                            tecnico_asignado: null,
+                            sot_instalacion: null
                         });
                     }
                 });
 
                 if(datosMaestros.length === 0) return msgLabel.innerHTML = "<span class='text-red-600'>⚠️ No se encontraron equipos válidos.</span>";
-                msgLabel.innerHTML = "<span class='text-blue-600'>Limpiando registros previos y guardando nueva data maestra...</span>";
+                msgLabel.innerHTML = `<span class='text-blue-600'>Guardando ${datosMaestros.length} equipos...</span>`;
                 
-                // Borramos solo la data anterior de este mismo tipo y ciudad para que no se mezcle basura vieja
-                await db.from('cruce_spacecom').delete().eq('tipo_flujo', tipoFlujo);
-
                 for (let i = 0; i < Math.ceil(datosMaestros.length/1000); i++) {
                     const lote = datosMaestros.slice(i*1000, (i+1)*1000);
                     const {error} = await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                     if(error) return msgLabel.innerHTML = `<span class='text-red-600'>Error BD: ${error.message}</span>`;
                 }
-                msgLabel.innerHTML = `<span class='text-green-600'>✅ Base Maestra creada con éxito (${datosMaestros.length} equipos).</span>`; fileInput.value = "";
+                msgLabel.innerHTML = `<span class='text-green-600'>✅ Data del Supervisor cargada con éxito.</span>`; fileInput.value = "";
             }; reader.readAsArrayBuffer(file);
         }
 
-        // PROCESAR SPACECOM (SOLO BUSCA Y ACTUALIZA TÉCNICO O SOT, JAMÁS TOCA LA CIUDAD)
+        // 2. CRUCE PURO DE SERIES CON SPACECOM (Stock o SOTs)
         async function procesarSpaceCom(inputId, selectId, tipoFlujo, msgId) {
-            const fileInput = document.getElementById(inputId); const msgLabel = document.getElementById(msgId);
+            const fileInput = document.getElementById(inputId); 
+            const msgLabel = document.getElementById(msgId);
             const tipoReporte = document.getElementById(selectId).value; // ALMACEN, TECNICOS, SOTS
-            const file = fileInput.files[0]; if (!file) return alert("Selecciona un archivo");
-            msgLabel.innerHTML = "<span class='text-blue-600'>Cruzando con BD...</span>";
+            const file = fileInput.files[0]; 
+            if (!file) return alert("Selecciona un archivo");
             
+            msgLabel.innerHTML = "<span class='text-blue-600'>Leyendo SpaceCom y cruzando series...</span>";
+
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
+                const data = new Uint8Array(e.target.result); 
+                const workbook = XLSX.read(data, { type: 'array' });
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                 
-                let actualizados = 0;
-
-                for (const fila of jsonData) {
-                    let eq_serie='', eq_valor='';
+                const mapaSpaceCom = new Map();
+                jsonData.forEach(fila => {
+                    let eq_serie = '', eq_valor = '';
                     Object.keys(fila).forEach(k => {
                         const nk = normalizeKey(k);
-                        if (nk.includes('SERIE') || nk==='S/N' || nk==='IMEI') eq_serie = fila[k];
+                        if (nk.includes('SERIE') || nk === 'S/N' || nk === 'IMEI') eq_serie = fila[k];
                         if (tipoReporte === 'TECNICOS' && (nk.includes('TECNICO') || nk.includes('NOMBRE'))) eq_valor = fila[k];
-                        if (tipoReporte === 'SOTS' && (nk==='SOT' || nk==='ORDEN')) eq_valor = fila[k];
+                        if (tipoReporte === 'SOTS' && (nk === 'SOT' || nk === 'ORDEN')) eq_valor = fila[k];
                     });
 
-                    const sl = (eq_serie||'').toString().trim().toUpperCase(); 
-                    const vl = (eq_valor||'').toString().trim();
-                    
+                    const sl = (eq_serie || '').toString().trim().toUpperCase();
+                    const vl = (eq_valor || '').toString().trim();
                     if (sl) {
+                        mapaSpaceCom.set(sl, vl);
+                    }
+                });
+
+                if (mapaSpaceCom.size === 0) {
+                    msgLabel.innerHTML = "<span class='text-red-600'>⚠️ No se detectaron series en el archivo.</span>";
+                    return;
+                }
+
+                const { data: dbData, error: dbError } = await db.from('cruce_spacecom').select('serie').eq('tipo_flujo', tipoFlujo);
+                if (dbError) {
+                    msgLabel.innerHTML = `<span class='text-red-600'>Error al consultar BD: ${dbError.message}</span>`;
+                    return;
+                }
+
+                const seriesEnBD = new Set(dbData.map(d => d.serie));
+                const actualizaciones = [];
+
+                mapaSpaceCom.forEach((valor, serie) => {
+                    if (seriesEnBD.has(serie)) {
                         if (tipoReporte === 'ALMACEN') {
-                            // Limpia técnico y sot si el reporte dice que volvió al almacén
-                            const { error } = await db.from('cruce_spacecom').update({ tecnico_asignado: null, sot_instalacion: null }).eq('serie', sl).eq('tipo_flujo', tipoFlujo);
-                            if(!error) actualizados++;
-                        } else if (tipoReporte === 'TECNICOS' && vl) {
-                            const { error } = await db.from('cruce_spacecom').update({ tecnico_asignado: vl }).eq('serie', sl).eq('tipo_flujo', tipoFlujo);
-                            if(!error) actualizados++;
-                        } else if (tipoReporte === 'SOTS' && vl) {
-                            const { error } = await db.from('cruce_spacecom').update({ sot_instalacion: vl }).eq('serie', sl).eq('tipo_flujo', tipoFlujo);
-                            if(!error) actualizados++;
+                            actualizaciones.push({ serie: serie, tecnico_asignado: null, sot_instalacion: null, tipo_flujo: tipoFlujo });
+                        } else if (tipoReporte === 'TECNICOS') {
+                            actualizaciones.push({ serie: serie, tecnico_asignado: valor || null, tipo_flujo: tipoFlujo });
+                        } else if (tipoReporte === 'SOTS') {
+                            actualizaciones.push({ serie: serie, sot_instalacion: valor || null, tipo_flujo: tipoFlujo });
                         }
+                    }
+                });
+
+                if (actualizaciones.length === 0) {
+                    msgLabel.innerHTML = "<span class='text-yellow-600'>⚠️ Ninguna serie de SpaceCom coincide con la Base Maestra.</span>";
+                    return;
+                }
+
+                msgLabel.innerHTML = `<span class='text-blue-600'>Actualizando ${actualizaciones.length} equipos encontrados...</span>`;
+
+                for (let i = 0; i < Math.ceil(actualizaciones.length / 1000); i++) {
+                    const lote = actualizaciones.slice(i * 1000, (i + 1) * 1000);
+                    const { error: errUp } = await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
+                    if (errUp) {
+                        msgLabel.innerHTML = `<span class='text-red-600'>Error al actualizar: ${errUp.message}</span>`;
+                        return;
                     }
                 }
 
-                msgLabel.innerHTML = `<span class='text-green-600'>✅ Proceso terminado. ${actualizados} registros actualizados sin alterar ciudades.</span>`; 
+                msgLabel.innerHTML = `<span class='text-green-600'>✅ ¡Cruce Exitoso! ${actualizaciones.length} series actualizadas.</span>`;
                 fileInput.value = "";
-            }; reader.readAsArrayBuffer(file);
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         // RADAR
@@ -438,7 +474,7 @@
             let query = db.from('cruce_spacecom').select('*').eq('tipo_flujo', tipoFlujo).ilike('ciudad', sedeActual).limit(500);
             if (termino) query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,sot_instalacion.ilike.%${termino}%,modelo.ilike.%${termino}%`);
             
-            if (filtro === 'FALTA_BUSCAR') query = query.is('tecnico_asignado', null).is('sot_instalacion', null);
+            if (filtro === 'ALMACEN') query = query.is('tecnico_asignado', null).is('sot_instalacion', null);
             else if (filtro === 'TECNICO') query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
             else if (filtro === 'SOT') query = query.not('sot_instalacion', 'is', null).neq('sot_instalacion', '').neq('sot_instalacion', 'EMPTY');
 
@@ -447,7 +483,7 @@
 
             tbody.innerHTML = '';
             data.forEach(eq => {
-                let ubicacion = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR EN ESTANTE</span>';
+                let ubicacion = '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">EN ALMACÉN</span>';
                 if (eq.tecnico_asignado) ubicacion = `<span class="font-bold text-gray-700">Técnico: </span>${eq.tecnico_asignado}`;
                 else if (eq.sot_instalacion && eq.sot_instalacion !== 'EMPTY') ubicacion = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">SOT: ${eq.sot_instalacion}</span>`;
 
