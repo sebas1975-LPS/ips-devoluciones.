@@ -115,7 +115,6 @@
                         <option value="TODOS">Ver Todos</option>
                         <option value="ALMACEN">Solo Stock Almacén</option>
                         <option value="TECNICO">En poder de Técnico</option>
-                        <!-- NUEVO FILTRO PARA VER SOLO LO DEL ADMIN -->
                         <option value="CLARO">Solo Reporte Claro (Admin)</option>
                     </select>
                 </div>
@@ -313,37 +312,69 @@
             }
         });
 
-        // --- SUBIDA DE EXCEL ---
+        // --- LECTOR DE EXCEL INTELIGENTE (ACTUALIZADO) ---
         async function procesarExcel(inputId, origenVal, btnId, msgId) {
             const fileInput = document.getElementById(inputId);
             const msgLabel = document.getElementById(msgId);
             const file = fileInput.files[0];
             if (!file) { alert("Selecciona un archivo primero"); return; }
             
-            msgLabel.innerText = "Leyendo archivo... espere.";
+            msgLabel.innerText = "Analizando columnas... espere.";
             const reader = new FileReader();
+            
             reader.onload = async (event) => {
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                 
-                const datosMapeados = jsonData.map(fila => ({
-                    serie: (fila['SERIE'] || fila['S/N'] || fila['Serie'] || fila['IMEI'] || '').toString().trim().toUpperCase(),
-                    sku: (fila['SKU'] || fila['CODIGO'] || '').toString().trim(),
-                    modelo: (fila['MODELO'] || fila['DESCRIPCION'] || '').toString().trim(),
-                    tecnico_asignado: (fila['TECNICO'] || fila['NOMBRE TECNICO'] || fila['Técnico'] || '').toString().trim(),
-                    sot_instalacion: (fila['SOT'] || fila['ORDEN'] || '').toString().trim(),
-                    dias_antiguedad: parseInt(fila['DIAS'] || fila['ANTIGUEDAD'] || fila['Dias'] || 0),
-                    origen_reporte: origenVal
-                })).filter(f => f.serie !== '');
+                // Función para limpiar tildes y espacios en las cabeceras
+                const normalizeKey = (key) => key.toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-                msgLabel.innerText = `Subiendo ${datosMapeados.length} registros...`;
+                const datosMapeados = jsonData.map(fila => {
+                    let eq_serie = '';
+                    let eq_sku = '';
+                    let eq_modelo = '';
+                    let eq_tecnico = '';
+                    let eq_sot = '';
+                    let eq_dias = 0;
+
+                    // Busca en todas las columnas del Excel sin importar mayúsculas o tildes
+                    Object.keys(fila).forEach(k => {
+                        const nk = normalizeKey(k);
+                        if (nk === 'NUMERO DE SERIE' || nk === 'SERIE' || nk === 'S/N' || nk === 'IMEI') eq_serie = fila[k];
+                        if (nk === 'MATERIAL' || nk === 'SKU' || nk === 'CODIGO') eq_sku = fila[k];
+                        if (nk === 'DESCRIPCION DEL MATERIAL' || nk === 'MODELO' || nk === 'DESCRIPCION') eq_modelo = fila[k];
+                        if (nk === 'TECNICO' || nk === 'NOMBRE TECNICO' || nk === 'CONTRATA') eq_tecnico = fila[k];
+                        if (nk === 'SOT' || nk === 'ORDEN') eq_sot = fila[k];
+                        if (nk === 'DIAS DE ANTIGUAMIENTO' || nk === 'DIAS' || nk === 'ANTIGUEDAD') eq_dias = fila[k];
+                    });
+
+                    return {
+                        serie: (eq_serie || '').toString().trim().toUpperCase(),
+                        sku: (eq_sku || '').toString().trim(),
+                        modelo: (eq_modelo || '').toString().trim(),
+                        tecnico_asignado: (eq_tecnico || '').toString().trim(),
+                        sot_instalacion: (eq_sot || '').toString().trim(),
+                        dias_antiguedad: parseInt(eq_dias || 0),
+                        origen_reporte: origenVal
+                    };
+                }).filter(f => f.serie !== '');
+
+                // Si no encontró ninguna serie válida
+                if(datosMapeados.length === 0) {
+                    msgLabel.innerHTML = "<span class='text-red-600'>⚠️ Error: No se encontraron series en el archivo. Verifica las columnas.</span>";
+                    alert("El sistema no encontró la columna 'NÚMERO DE SERIE' o 'SERIE' en el Excel. No se subió nada.");
+                    fileInput.value = "";
+                    return;
+                }
+
+                msgLabel.innerText = `Subiendo ${datosMapeados.length} equipos detectados...`;
                 const TAMAÑO_LOTE = 1000;
                 for (let i = 0; i < Math.ceil(datosMapeados.length / TAMAÑO_LOTE); i++) {
                     const lote = datosMapeados.slice(i * TAMAÑO_LOTE, (i + 1) * TAMAÑO_LOTE);
                     await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                 }
-                msgLabel.innerText = "✅ Datos subidos correctamente.";
+                msgLabel.innerText = `✅ ¡Éxito! ${datosMapeados.length} registros guardados.`;
                 fileInput.value = "";
             };
             reader.readAsArrayBuffer(file);
@@ -352,7 +383,7 @@
         document.getElementById('btn_subir_almacen').addEventListener('click', () => { procesarExcel('input_excel_almacen', document.getElementById('origen_almacen').value, 'btn_subir_almacen', 'msg_almacen'); });
         document.getElementById('btn_subir_admin').addEventListener('click', () => { procesarExcel('input_excel_admin', 'CLARO_ANTIGUAMIENTO', 'btn_subir_admin', 'msg_admin'); });
 
-        // --- LÓGICA DE BÚSQUEDA / INVENTARIO ACTUALIZADA ---
+        // --- LÓGICA DE BÚSQUEDA / INVENTARIO ---
         async function cargarInventario() {
             const termino = document.getElementById('input_busqueda_inv').value.trim().toUpperCase();
             const filtro = document.getElementById('filtro_estado_inv').value;
@@ -366,7 +397,6 @@
                 query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,modelo.ilike.%${termino}%`);
             }
 
-            // APLICACIÓN DE FILTROS INCLUYENDO EL DE CLARO ADMIN
             if (filtro === 'ALMACEN') {
                 query = query.or('tecnico_asignado.is.null,tecnico_asignado.eq.');
             } else if (filtro === 'TECNICO') {
@@ -396,7 +426,6 @@
                     textoTecnico = '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN</span>';
                 }
 
-                // Resaltamos visualmente si viene del reporte de Claro
                 let badgeClaro = '';
                 if(eq.origen_reporte === 'CLARO_ANTIGUAMIENTO') {
                     badgeClaro = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold block mt-1">DATA ADMIN (CLARO)</span>';
