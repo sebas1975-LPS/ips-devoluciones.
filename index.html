@@ -30,7 +30,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-xs font-semibold text-blue-200 hidden sm:inline">SEDE ACTIVA:</span>
-                <select id="sede_selector" onchange="alCambiarSede()" class="bg-blue-900 text-white font-bold text-sm rounded-lg px-3 py-2 border border-blue-700 outline-none cursor-pointer">
+                <select id="sede_selector" onchange="alCambiarSede()" class="bg-blue-900 text-white font-bold text-sm rounded-lg px-3 py-2 border border-blue-700 outline-none cursor-pointer hover:bg-blue-800 transition">
                     <option value="AREQUIPA">AREQUIPA</option>
                     <option value="LIMA">LIMA</option>
                     <option value="CUSCO">CUSCO</option>
@@ -188,32 +188,47 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- LISTA DE TÉCNICOS -->
                     <div class="md:col-span-1 border rounded-xl bg-slate-50 h-[500px] flex flex-col">
                         <div class="p-3 bg-slate-200 font-bold text-xs uppercase text-slate-700">Técnicos (Antiguamiento)</div>
                         <ul id="lista_tecnicos_pendientes" class="divide-y overflow-y-auto flex-grow scroll-clean"></ul>
                     </div>
 
+                    <!-- DETALLE DEL TÉCNICO SELECCIONADO -->
                     <div class="md:col-span-2">
                         <div id="panel_detalle_tecnico" class="hidden border rounded-xl p-5 bg-white shadow-sm">
-                            <div class="flex justify-between items-center border-b pb-4 mb-4">
-                                <h3 id="detalle_nombre_tecnico" class="text-lg font-bold text-slate-900">TÉCNICO</h3>
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-4 gap-4">
+                                <div>
+                                    <h3 id="detalle_nombre_tecnico" class="text-lg font-bold text-slate-900">TÉCNICO</h3>
+                                    <!-- AQUI ESTABA EL ERROR DEL CONTADOR QUE SOLUCIONÉ -->
+                                    <span id="detalle_conteo_equipos" class="text-xs bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full inline-block mt-1">0 equipos</span>
+                                </div>
                                 <div class="flex gap-2">
                                     <button onclick="copiarTextoWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg text-xs">📋 Copiar Texto</button>
                                     <button onclick="copiarImagenWhatsApp()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-3 py-2 rounded-lg text-xs">📸 Copiar Imagen</button>
                                 </div>
                             </div>
 
+                            <!-- TARJETA VISUAL DE WHATSAPP -->
                             <div id="tarjeta_whatsapp_captura" class="p-4 bg-white border rounded-xl">
                                 <div class="bg-blue-950 text-white p-3 rounded-lg text-center mb-3">
                                     <h4 id="tarjeta_titulo_tecnico" class="font-bold uppercase text-sm">NOMBRE</h4>
                                     <p class="text-xs text-blue-300">Devolución Obligatoria - Antiguamiento</p>
                                 </div>
                                 <table class="w-full text-xs text-left border-collapse border">
-                                    <thead class="bg-slate-100"><tr class="border-b"><th class="p-2 border-r">SKU</th><th class="p-2 border-r">Modelo</th><th class="p-2 border-r">Serie</th><th class="p-2">Días</th></tr></thead>
+                                    <thead class="bg-slate-100">
+                                        <tr class="border-b">
+                                            <th class="p-2 border-r">SKU</th>
+                                            <th class="p-2 border-r">Modelo</th>
+                                            <th class="p-2 border-r">Serie</th>
+                                            <th class="p-2 text-right">Días</th>
+                                        </tr>
+                                    </thead>
                                     <tbody id="tarjeta_tbody_equipos" class="divide-y"></tbody>
                                 </table>
                             </div>
                         </div>
+                        
                         <div id="panel_vacio_tecnico" class="border border-dashed rounded-xl p-12 text-center text-slate-400">Selecciona un técnico a la izquierda.</div>
                     </div>
                 </div>
@@ -281,8 +296,8 @@
                     <h3 id="modal_titulo_caja" class="text-lg font-bold">Etiqueta</h3>
                     <button onclick="document.getElementById('modal_etiqueta').classList.add('hidden')" class="text-slate-400 hover:text-red-500 font-bold">✕</button>
                 </div>
-                <div id="modal_contenido_series" class="max-h-80 overflow-y-auto space-y-1 font-mono text-sm mb-4 border rounded p-3"></div>
-                <button onclick="window.print()" class="w-full bg-blue-900 text-white font-bold py-3 rounded-lg shadow">🖨️ Imprimir Guía</button>
+                <div id="modal_contenido_series" class="max-h-80 overflow-y-auto space-y-1 font-mono text-sm mb-4 border rounded p-3 bg-slate-50"></div>
+                <button onclick="window.print()" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-3 rounded-lg shadow transition">🖨️ Imprimir Guía</button>
             </div>
         </div>
 
@@ -299,13 +314,13 @@
                     <div class="border rounded-xl p-5 bg-red-50">
                         <h3 class="font-bold text-red-900 mb-2">Cargar Antiguamiento (>40 días)</h3>
                         <input type="file" id="file_admin_anti" accept=".xlsx, .csv" class="w-full text-xs border bg-white p-2 rounded mb-3">
-                        <button onclick="procesarMasterSupervisor('file_admin_anti', 'ANTIGUAMIENTO', 'msg_admin_anti')" class="w-full bg-red-700 text-white font-bold py-2 rounded text-sm">Subir Antiguamiento</button>
+                        <button onclick="procesarMasterSupervisor('file_admin_anti', 'ANTIGUAMIENTO', 'msg_admin_anti')" class="w-full bg-red-700 hover:bg-red-800 transition text-white font-bold py-2 rounded text-sm">Subir Antiguamiento</button>
                         <p id="msg_admin_anti" class="mt-2 text-xs font-bold text-center"></p>
                     </div>
-                    <div class="border rounded-xl p-5 bg-green-50">
-                        <h3 class="font-bold text-green-900 mb-2">Cargar Recuperados</h3>
+                    <div class="border rounded-xl p-5 bg-emerald-50">
+                        <h3 class="font-bold text-emerald-900 mb-2">Cargar Recuperados</h3>
                         <input type="file" id="file_admin_recu" accept=".xlsx, .csv" class="w-full text-xs border bg-white p-2 rounded mb-3">
-                        <button onclick="procesarMasterSupervisor('file_admin_recu', 'RECUPERADO', 'msg_admin_recu')" class="w-full bg-green-700 text-white font-bold py-2 rounded text-sm">Subir Recuperados</button>
+                        <button onclick="procesarMasterSupervisor('file_admin_recu', 'RECUPERADO', 'msg_admin_recu')" class="w-full bg-emerald-700 hover:bg-emerald-800 transition text-white font-bold py-2 rounded text-sm">Subir Recuperados</button>
                         <p id="msg_admin_recu" class="mt-2 text-xs font-bold text-center"></p>
                     </div>
                 </div>
@@ -314,7 +329,7 @@
 
     </main>
 
-    <!-- MOTOR LÓGICO V4.0 -->
+    <!-- MOTOR LÓGICO V4.0.1 -->
     <script>
         const SUPABASE_URL = 'https://fbxzhasfdvkqunnebkij.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY';
@@ -366,7 +381,7 @@
         // ==========================================
         // MÓDULO: PISTOLEO Y AUTO-CAJAS (ANTIGUAMIENTO)
         // ==========================================
-        let autoCajas = {}; // { "SKU_123": { id: "ARE-123-01", series: [], modelo: "ROUTER..." } }
+        let autoCajas = {}; 
 
         function generarIdCaja(sku) {
             const sede = document.getElementById('sede_selector').value.substring(0,3);
@@ -389,7 +404,7 @@
                         <div class="flex-grow max-h-24 overflow-y-auto text-xs font-mono bg-slate-50 p-2 rounded mb-3 border">
                             ${box.series.map(s => `✓ ${s}`).join('<br>')}
                         </div>
-                        <button onclick="cerrarCajaEspecifica('${sku}')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded text-xs">📦 Cerrar e Imprimir</button>
+                        <button onclick="cerrarCajaEspecifica('${sku}')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-lg text-xs transition">📦 Cerrar e Imprimir</button>
                     </div>`;
             });
         }
@@ -423,15 +438,12 @@
                     return;
                 }
 
-                // Equipo Válido. Procesamos Auto-caja.
                 playSound('success');
                 const sku = eqDB.sku || 'SIN-SKU';
                 if(!autoCajas[sku]) autoCajas[sku] = { id: generarIdCaja(sku), series: [], modelo: eqDB.modelo || 'Sin descripción' };
                 
-                // Si la serie ya está en la caja, evitamos duplicado visual
                 if(!autoCajas[sku].series.includes(serie)) {
                     autoCajas[sku].series.push(serie);
-                    // Actualizamos BD: Marcamos pistoleado y guardamos en historial
                     await db.from('cruce_spacecom').update({ pistoleado: true }).eq('serie', serie);
                     await db.from('equipos_escaneados').insert([{ serie: serie, sede: sedeActual, tipo: 'ANTIGUAMIENTO', caja: autoCajas[sku].id }]);
                 }
@@ -447,8 +459,8 @@
             alert(`✅ Caja ${box.id} cerrada y lista para imprimir.`);
             delete autoCajas[sku];
             renderBoxes();
-            cargarHistorialCajas(); // Refrescar en memoria si el modal se abre
-            abrirEtiquetaCaja(box.id, box.series);
+            cargarHistorialCajas(); 
+            abrirEtiqueta(box.id, box.series);
         }
 
         // =======================================================
@@ -477,7 +489,7 @@
             document.getElementById('contador_recu_listo').innerText = listaRecuListos.length;
 
             uiPendiente.innerHTML = listaRecuPendientes.map(eq => `<li class="p-2 border-b text-rose-900">${eq.serie} <span class="text-rose-400 text-[10px] ml-2">${eq.modelo || ''}</span></li>`).join('');
-            uiListo.innerHTML = listaRecuListos.map(eq => `<li class="p-2 border-b text-emerald-900">✓ ${eq.serie}</li>`).join('');
+            uiListo.innerHTML = listaRecuListos.map(eq => `<li class="p-2 border-b text-emerald-900 font-bold">✓ ${eq.serie}</li>`).join('');
         }
 
         laserRecu.addEventListener('keypress', async (e) => {
@@ -489,7 +501,6 @@
 
                 const index = listaRecuPendientes.findIndex(eq => eq.serie === serie);
                 if(index === -1) {
-                    // Ver si ya fue pistoleado
                     if(listaRecuListos.some(eq => eq.serie === serie)) {
                         msgRecu.className = 'mt-3 text-center font-bold text-sm p-2 rounded bg-amber-100 text-amber-800 block';
                         msgRecu.innerText = "⚠️ Este equipo ya fue escaneado.";
@@ -501,25 +512,23 @@
                     return;
                 }
 
-                // Mover de lista y actualizar DB
                 playSound('success');
                 const eq = listaRecuPendientes.splice(index, 1)[0];
                 eq.pistoleado = true;
-                listaRecuListos.unshift(eq); // poner arriba
+                listaRecuListos.unshift(eq);
                 renderListasRecu();
 
                 msgRecu.className = 'mt-3 text-center font-bold text-sm p-2 rounded bg-emerald-100 text-emerald-800 block';
                 msgRecu.innerText = "✅ RECUPERADO CONFIRMADO";
 
                 await db.from('cruce_spacecom').update({ pistoleado: true }).eq('serie', serie);
-                // Guardarlo en caja genérica de recuperados
                 const cajaGenerica = `RECUP-${document.getElementById('sede_selector').value.substring(0,3)}-${new Date().toISOString().split('T')[0]}`;
                 await db.from('equipos_escaneados').insert([{ serie: serie, sede: document.getElementById('sede_selector').value, tipo: 'RECUPERADO', caja: cajaGenerica }]);
             }
         });
 
         // ==========================================
-        // CARGA ADMIN CLARO Y SPACECOM (LÓGICA PURA)
+        // CARGA ADMIN CLARO Y SPACECOM
         // ==========================================
         async function procesarMasterSupervisor(inputId, tipoFlujo, msgId) {
             const input = document.getElementById(inputId); const msg = document.getElementById(msgId);
@@ -539,7 +548,7 @@
                         if(nk.includes('SERIE') || nk==='S/N') s = r[k];
                         if(nk==='MATERIAL' || nk==='SKU' || nk==='CODIGO') sk = r[k];
                         if(nk.includes('DESCRIPCION') || nk.includes('MODELO')) m = r[k];
-                        if(nk.includes('DIAS')) d = r[k];
+                        if(nk.includes('DIAS') || nk.includes('ANTIGUEDAD')) d = r[k];
                         if(nk.includes('CIUDAD') || nk.includes('SEDE')) c = r[k];
                     });
 
@@ -559,7 +568,7 @@
                     const lote = validos.slice(i*1000, (i+1)*1000);
                     await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                 }
-                msg.innerHTML=`<span class='text-green-600'>✅ ${validos.length} equipos cargados (FALTA BUSCAR).</span>`; input.value="";
+                msg.innerHTML=`<span class='text-green-600'>✅ ${validos.length} equipos cargados. Nacen como FALTA BUSCAR.</span>`; input.value="";
             }; reader.readAsArrayBuffer(file);
         }
 
@@ -605,7 +614,7 @@
                     const lote = acts.slice(i*1000, (i+1)*1000);
                     await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                 }
-                msg.innerHTML=`<span class='text-green-600'>✅ ${acts.length} equipos actualizados.</span>`; input.value="";
+                msg.innerHTML=`<span class='text-green-600'>✅ ${acts.length} equipos actualizados (SOT/Técnico/Almacén).</span>`; input.value="";
             }; reader.readAsArrayBuffer(file);
         }
 
@@ -619,9 +628,9 @@
             const filtro = document.getElementById('radar_filtro_estado').value;
             const busq = document.getElementById('radar_busqueda').value.trim().toUpperCase();
             const tbody = document.getElementById('tbody_radar');
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-blue-600">Buscando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-blue-600 font-medium">Buscando en base de datos...</td></tr>';
 
-            let q = db.from('cruce_spacecom').select('*').eq('tipo_flujo', flujo).ilike('ciudad', sede).limit(1000);
+            let q = db.from('cruce_spacecom').select('*').eq('tipo_flujo', flujo).ilike('ciudad', sede).limit(2000);
             if(busq) q = q.or(`serie.ilike.%${busq}%,tecnico_asignado.ilike.%${busq}%,sot_instalacion.ilike.%${busq}%,sku.ilike.%${busq}%`);
 
             const { data } = await q;
@@ -629,31 +638,27 @@
 
             const filtrados = data.filter(eq => {
                 const isSot = !!eq.sot_instalacion;
-                const isAlm = eq.tecnico_asignado === 'EN ALMACEN' || eq.pistoleado; // SpaceCom o Láser
+                const isAlm = eq.tecnico_asignado === 'EN ALMACEN' || eq.pistoleado;
                 const isTec = !!eq.tecnico_asignado && !isAlm;
                 
                 if(filtro==='INSTALADO') return isSot;
                 if(filtro==='ALMACEN') return isAlm && !isSot;
                 if(filtro==='TECNICO') return isTec && !isSot;
                 if(filtro==='PENDIENTE') return !isSot && !isAlm && !isTec;
+                if(filtro==='PISTOLEADO') return eq.pistoleado;
                 return true;
             });
             datosRadarCache = filtrados;
 
-            document.getElementById('stat_total').innerText = data.length;
-            document.getElementById('stat_almacen').innerText = data.filter(e => (e.tecnico_asignado==='EN ALMACEN' || e.pistoleado) && !e.sot_instalacion).length;
-            document.getElementById('stat_tecnico').innerText = data.filter(e => e.tecnico_asignado && e.tecnico_asignado!=='EN ALMACEN' && !e.sot_instalacion).length;
-            document.getElementById('stat_sot').innerText = data.filter(e => e.sot_instalacion).length;
-
             tbody.innerHTML='';
             filtrados.forEach(eq => {
-                let badge = '<span class="badge-pendiente px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR EN ESTANTE</span>';
-                if(eq.sot_instalacion) badge = `<span class="badge-sot px-2 py-1 rounded text-xs font-bold">INSTALADO (SOT: ${eq.sot_instalacion})</span>`;
-                else if(eq.pistoleado) badge = `<span class="bg-blue-100 text-blue-800 border border-blue-200 px-2 py-1 rounded text-xs font-bold">CAJA PISTOLEADA</span>`;
-                else if(eq.tecnico_asignado==='EN ALMACEN') badge = `<span class="badge-almacen px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN (SpaceCom)</span>`;
-                else if(eq.tecnico_asignado) badge = `<span class="badge-tecnico px-2 py-1 rounded text-xs font-bold">TÉCNICO: ${eq.tecnico_asignado}</span>`;
+                let badge = '<span class="badge-pendiente px-2 py-1 rounded text-[10px] font-bold tracking-wide">FALTA BUSCAR EN ESTANTE</span>';
+                if(eq.sot_instalacion) badge = `<span class="badge-sot px-2 py-1 rounded text-[10px] font-bold tracking-wide">INSTALADO (SOT: ${eq.sot_instalacion})</span>`;
+                else if(eq.pistoleado) badge = `<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-1 rounded text-[10px] font-bold tracking-wide">CAJA PISTOLEADA</span>`;
+                else if(eq.tecnico_asignado==='EN ALMACEN') badge = `<span class="badge-almacen px-2 py-1 rounded text-[10px] font-bold tracking-wide">STOCK ALMACÉN (SpaceCom)</span>`;
+                else if(eq.tecnico_asignado) badge = `<span class="badge-tecnico px-2 py-1 rounded text-[10px] font-bold tracking-wide">TÉCNICO: ${eq.tecnico_asignado}</span>`;
 
-                tbody.innerHTML += `<tr class="border-b"><td class="p-2 font-mono">${eq.sku||'-'}</td><td class="p-2 text-xs">${eq.modelo||'-'}</td><td class="p-2 font-mono font-bold">${eq.serie}</td><td class="p-2">${badge}</td><td class="p-2 text-center font-bold">${eq.dias_antiguedad||0}</td></tr>`;
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2 font-mono">${eq.sku||'-'}</td><td class="p-2 text-xs truncate max-w-[200px]">${eq.modelo||'-'}</td><td class="p-2 font-mono font-bold text-blue-900">${eq.serie}</td><td class="p-2">${badge}</td><td class="p-2 text-center font-bold text-rose-600">${eq.dias_antiguedad||0}</td></tr>`;
             });
         }
 
@@ -675,12 +680,20 @@
             mapaTecnicos = {};
             data.forEach(eq => { if(!mapaTecnicos[eq.tecnico_asignado]) mapaTecnicos[eq.tecnico_asignado]=[]; mapaTecnicos[eq.tecnico_asignado].push(eq); });
             const ul = document.getElementById('lista_tecnicos_pendientes'); ul.innerHTML='';
-            Object.keys(mapaTecnicos).forEach(t => { ul.innerHTML+=`<li onclick="selectTec('${t}')" class="p-3 border-b hover:bg-slate-200 cursor-pointer text-xs font-bold flex justify-between"><span>${t}</span><span class="text-rose-600">${mapaTecnicos[t].length}</span></li>`; });
+            Object.keys(mapaTecnicos).forEach(t => { ul.innerHTML+=`<li onclick="selectTec('${t}')" class="p-3 border-b hover:bg-slate-200 cursor-pointer text-xs font-bold flex justify-between"><span>${t}</span><span class="text-rose-600 bg-rose-100 px-2 rounded-full">${mapaTecnicos[t].length}</span></li>`; });
         }
         function selectTec(t) {
-            tecActual = t; document.getElementById('panel_vacio_tecnico').classList.add('hidden'); document.getElementById('panel_detalle_tecnico').classList.remove('hidden');
-            document.getElementById('detalle_nombre_tecnico').innerText = t; document.getElementById('tarjeta_titulo_tecnico').innerText = t; document.getElementById('detalle_conteo_equipos').innerText = mapaTecnicos[t].length + " eq";
-            document.getElementById('tarjeta_tbody_equipos').innerHTML = mapaTecnicos[t].map(eq => `<tr><td class="p-1 font-mono">${eq.sku||'-'}</td><td class="p-1">${eq.modelo||'-'}</td><td class="p-1 font-mono font-bold">${eq.serie}</td><td class="p-1 text-right text-rose-600 font-bold">${eq.dias_antiguedad}</td></tr>`).join('');
+            tecActual = t; 
+            document.getElementById('panel_vacio_tecnico').classList.add('hidden'); 
+            document.getElementById('panel_detalle_tecnico').classList.remove('hidden');
+            document.getElementById('detalle_nombre_tecnico').innerText = t; 
+            document.getElementById('tarjeta_titulo_tecnico').innerText = t; 
+            
+            // CORRECCIÓN DE LA ETIQUETA CONTADOR APLICADA AQUÍ:
+            const conteoEl = document.getElementById('detalle_conteo_equipos');
+            if(conteoEl) conteoEl.innerText = mapaTecnicos[t].length + " equipos";
+            
+            document.getElementById('tarjeta_tbody_equipos').innerHTML = mapaTecnicos[t].map(eq => `<tr class="bg-white"><td class="p-2 font-mono text-slate-500 border-r">${eq.sku||'-'}</td><td class="p-2 border-r">${eq.modelo||'-'}</td><td class="p-2 font-mono font-bold text-blue-900 border-r">${eq.serie}</td><td class="p-2 text-right text-rose-600 font-bold">${eq.dias_antiguedad}</td></tr>`).join('');
         }
         function copiarTextoWhatsApp() {
             if(!tecActual) return;
@@ -710,6 +723,8 @@
             document.getElementById('modal_contenido_series').innerHTML = series.map((s,i) => `<div class="flex justify-between border-b py-1"><span class="text-slate-400">#${i+1}</span><span class="font-bold">${s}</span></div>`).join('');
             document.getElementById('modal_etiqueta').classList.remove('hidden');
         }
+
+        window.addEventListener('DOMContentLoaded', () => { cargarRadar(); });
     </script>
 </body>
 </html>
