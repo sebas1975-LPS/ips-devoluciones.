@@ -3,238 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPS Logística</title>
-    <!-- Tailwind CSS -->
+    <title>IPS Logística - V4.0 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- SheetJS -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <!-- HTML2Canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .box-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+        .scroll-clean::-webkit-scrollbar { width: 6px; }
+        .scroll-clean::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans overflow-x-hidden">
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800">
 
-    <!-- BARRA DE NAVEGACIÓN -->
-    <nav class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center relative z-40">
-        <div class="flex items-center gap-4">
-            <button onclick="toggleMenu()" class="hover:bg-blue-800 p-2 rounded cursor-pointer transition">
-                <svg class="w-8 h-8 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
-            <h1 class="text-2xl font-bold">IPS Logística</h1>
+    <!-- BARRA SUPERIOR -->
+    <header class="bg-blue-950 text-white p-4 shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="hover:bg-blue-900 p-2 rounded-lg cursor-pointer transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div class="flex flex-col">
+                    <span class="text-xl font-bold tracking-tight">IPS Logística</span>
+                    <span class="text-[10px] text-blue-300 font-bold uppercase tracking-widest">Control Físico y Trazabilidad</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold text-blue-200 hidden sm:inline">SEDE ACTIVA:</span>
+                <select id="sede_selector" onchange="alCambiarSede()" class="bg-blue-900 text-white font-bold text-sm rounded-lg px-3 py-2 border border-blue-700 outline-none cursor-pointer">
+                    <option value="AREQUIPA">AREQUIPA</option>
+                    <option value="LIMA">LIMA</option>
+                    <option value="CUSCO">CUSCO</option>
+                </select>
+            </div>
         </div>
-        <div class="flex items-center gap-4">
-            <select id="sede_selector" class="text-black rounded px-2 py-1 font-bold outline-none cursor-pointer">
-                <option value="AREQUIPA">AREQUIPA</option>
-                <option value="LIMA">LIMA</option>
-                <option value="CUSCO">CUSCO</option>
-            </select>
-        </div>
-    </nav>
+    </header>
 
     <!-- MENÚ LATERAL -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 bg-slate-900 text-white w-72 transform -translate-x-full transition-transform duration-300 z-30 pt-20 shadow-2xl overflow-y-auto">
-        <div class="flex flex-col p-4 space-y-1">
-            <button onclick="cambiarVista('vista_pistoleo')" class="text-left px-4 py-3 bg-blue-700 hover:bg-blue-600 rounded font-bold transition shadow mb-4 border-l-4 border-blue-400">📦 Consola Pistoleo</button>
-            
-            <p class="text-xs text-gray-400 font-bold uppercase mt-2 mb-1 px-2 tracking-widest">⏳ Antiguamiento</p>
-            <button onclick="cambiarVista('vista_anti_radar')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">🔍 Radar y Reportes</button>
-            <button onclick="cambiarVista('vista_anti_spacecom')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">📥 Subir SpaceCom</button>
-            <button onclick="cambiarVista('vista_anti_whatsapp')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">📱 Reporte WhatsApp</button>
-            
-            <p class="text-xs text-gray-400 font-bold uppercase mt-6 mb-1 px-2 tracking-widest">♻️ Recuperados</p>
-            <button onclick="cambiarVista('vista_recu_radar')" class="text-left px-4 py-2 hover:bg-slate-700 rounded transition text-sm">🔍 Radar de Recuperados</button>
-            
-            <hr class="border-slate-700 my-6">
-            <button onclick="abrirModalAdmin()" class="text-left px-4 py-3 bg-red-900 hover:bg-red-800 rounded font-bold text-red-100 transition flex justify-between border-l-4 border-red-500 shadow">
-                <span>⚙️ Admin Claro</span>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 bg-slate-900 text-white w-72 transform -translate-x-full transition-transform duration-300 z-50 pt-20 shadow-2xl flex flex-col justify-between">
+        <div class="p-4 space-y-1 overflow-y-auto">
+            <button onclick="navegar('vista_radar')" class="w-full text-left px-4 py-3 rounded-lg font-medium hover:bg-slate-800 transition flex items-center gap-3"><span>🔍</span> Radar / Inventario</button>
+            <button onclick="navegar('vista_cruce_spacecom')" class="w-full text-left px-4 py-3 rounded-lg font-medium hover:bg-slate-800 transition flex items-center gap-3"><span>📥</span> Cruce SpaceCom</button>
+            <button onclick="navegar('vista_reporte_tecnicos')" class="w-full text-left px-4 py-3 rounded-lg font-medium hover:bg-slate-800 transition flex items-center gap-3"><span>📱</span> Reporte Técnicos (WSP)</button>
+
+            <hr class="border-slate-800 my-4">
+            <p class="text-xs font-bold text-blue-400 uppercase tracking-widest px-3 mb-2">📦 Op. Antiguamiento</p>
+            <button onclick="navegar('vista_pistoleo_anti')" class="w-full text-left px-4 py-2.5 bg-blue-900/50 hover:bg-blue-800 rounded-lg font-bold transition text-sm flex items-center gap-3 shadow-inner border border-blue-800/50 mb-2">🔫 Pistoleo y Auto-Cajas</button>
+            <button onclick="navegar('vista_historial_cajas')" class="w-full text-left px-4 py-2 hover:bg-slate-800 rounded-lg font-medium transition text-sm flex items-center gap-3">🖨️ Historial Cajas</button>
+
+            <hr class="border-slate-800 my-4">
+            <p class="text-xs font-bold text-green-400 uppercase tracking-widest px-3 mb-2">♻️ Op. Recuperados</p>
+            <button onclick="navegar('vista_pistoleo_recu')" class="w-full text-left px-4 py-2.5 bg-green-900/40 hover:bg-green-800/60 rounded-lg font-bold transition text-sm flex items-center gap-3 border border-green-800/40">🔫 Pistoleo / Check-List</button>
+
+            <hr class="border-slate-800 my-4">
+            <button onclick="abrirModalAdmin()" class="w-full text-left px-4 py-3 rounded-lg font-bold bg-red-950/40 text-red-200 hover:bg-red-900/60 border border-red-800/40 transition flex items-center justify-between">
+                <span class="flex items-center gap-3"><span>⚙️</span> Admin Claro</span> <span class="text-xs">🔒</span>
             </button>
         </div>
-    </div>
+    </aside>
 
-    <!-- MODAL ADMIN -->
-    <div id="modal_admin" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex justify-center items-center backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-xl shadow-2xl p-8 w-96 max-w-[90%] border-t-8 border-red-700">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-bold text-gray-800">Acceso Restringido</h3>
-                <button onclick="cerrarModalAdmin()" class="text-gray-400 hover:text-red-500 transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-            </div>
-            <p class="text-gray-600 text-sm mb-6">Contraseña requerida para gestionar bases maestras.</p>
-            <input type="password" id="input_pass_admin" class="w-full border-2 border-gray-300 rounded-lg p-3 mb-2 outline-none focus:border-red-600 text-center tracking-widest font-bold" placeholder="••••••••">
-            <p id="error_pass_admin" class="text-red-600 text-sm font-bold hidden mb-4 text-center">❌ Contraseña incorrecta</p>
-            <div class="flex gap-3 mt-6">
-                <button onclick="cerrarModalAdmin()" class="w-1/2 px-4 py-3 bg-gray-100 hover:bg-gray-200 font-bold rounded-lg transition">Cancelar</button>
-                <button onclick="validarPasswordAdmin()" class="w-1/2 px-4 py-3 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg transition">Ingresar</button>
+    <!-- MODAL DE CLAVE ADMIN -->
+    <div id="modal_admin" class="fixed inset-0 bg-slate-950/70 z-50 hidden flex justify-center items-center backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-96 max-w-[90%] border-t-4 border-red-700">
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Acceso de Administrador</h3>
+            <p class="text-xs text-slate-500 mb-4">Solo para carga de Base Maestra de Claro.</p>
+            <input type="password" id="input_pass_admin" class="w-full border rounded-lg p-3 text-center tracking-widest font-bold mb-2 outline-none focus:border-red-600" placeholder="••••••••">
+            <p id="error_pass_admin" class="text-xs text-red-600 font-bold mb-3 hidden">Contraseña incorrecta.</p>
+            <div class="flex gap-2">
+                <button onclick="cerrarModalAdmin()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 font-semibold rounded-lg text-sm transition">Cancelar</button>
+                <button onclick="validarAdmin()" class="w-1/2 py-2.5 bg-red-700 hover:bg-red-800 text-white font-semibold rounded-lg text-sm transition">Acceder</button>
             </div>
         </div>
     </div>
 
     <!-- CONTENEDOR PRINCIPAL -->
-    <div id="main_content" class="transition-all duration-300 relative z-0">
+    <main class="max-w-7xl mx-auto p-4 sm:p-6" id="main_content">
 
-        <!-- VISTA 1: PISTOLEO -->
-        <section id="vista_pistoleo" class="max-w-6xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 p-4 vista-seccion block">
-            <div class="col-span-2 bg-white rounded-lg shadow-lg p-6 border-t-4 border-blue-600">
-                <h2 class="text-xl font-bold text-gray-700 mb-4">📦 Consola de Pistoleo Inteligente</h2>
-                <div class="flex gap-4 mb-6">
-                    <select id="tipo_flujo_pistoleo" class="border-2 border-gray-300 bg-gray-50 rounded p-3 font-bold text-lg w-1/2 outline-none cursor-pointer focus:border-blue-500">
-                        <option value="ANTIGUAMIENTO">Procesando: ANTIGUAMIENTO</option>
-                        <option value="RECUPERADO">Procesando: RECUPERADOS</option>
-                    </select>
-                    <input type="text" id="caja_activa" class="border-2 border-blue-400 bg-blue-50 rounded p-3 font-bold text-lg w-1/2 uppercase outline-none text-center">
-                </div>
-                <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg p-8 text-center cursor-text" id="zona_pistoleo">
-                    <input type="text" id="input_laser" autofocus autocomplete="off" class="w-full text-center text-4xl font-mono font-bold bg-transparent outline-none text-slate-800 placeholder-slate-300" placeholder="ESPERANDO LÁSER...">
-                </div>
+        <!-- ======================================================= -->
+        <!-- MÓDULO: PISTOLEO ANTIGUAMIENTO (AUTO-CAJAS POR SKU) -->
+        <!-- ======================================================= -->
+        <section id="vista_pistoleo_anti" class="vista-seccion block space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 border-t-4 border-t-blue-600">
+                <h2 class="text-2xl font-bold text-slate-900 mb-1">📦 Pistoleo Antiguamiento (Auto-Cajas por Modelo)</h2>
+                <p class="text-sm text-slate-500 mb-6">Escanea el equipo. El sistema validará su existencia y lo asignará automáticamente a una caja según su SKU.</p>
                 
-                <div id="msg_validacion" class="mt-4 text-center font-bold text-lg hidden p-3 rounded shadow-sm"></div>
-
-                <div id="resultado_cruce" class="mt-4 hidden p-4 rounded-lg border-l-4 shadow-sm">
-                    <p class="text-gray-700 font-bold text-xl" id="res_serie">Serie: ---</p>
-                    <p class="text-gray-700 font-bold text-lg mt-1" id="res_ubicacion">Ubicación: ---</p>
+                <div class="bg-blue-50 border-2 border-dashed border-blue-300 rounded-xl p-8 text-center cursor-text transition-colors" id="zona_pistoleo_anti">
+                    <input type="text" id="laser_anti" autofocus autocomplete="off" class="w-full text-center text-4xl font-mono font-bold bg-transparent outline-none text-blue-950 placeholder-blue-300" placeholder="ESCANEAR SERIE AQUÍ...">
                 </div>
+                <div id="msg_val_anti" class="mt-4 text-center font-bold text-lg hidden p-3 rounded shadow-sm"></div>
             </div>
-            
-            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-700">Caja Actual</h2>
-                    <span id="contador_caja" class="bg-blue-100 text-blue-800 text-2xl font-black px-4 py-1 rounded-full">0</span>
-                </div>
-                <ul id="lista_escaneados" class="space-y-2 flex-grow overflow-y-auto mb-4 border-b pb-4 min-h-[250px] max-h-[350px]"></ul>
-                <button onclick="cerrarCaja()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-4 rounded shadow-lg cursor-pointer transition text-lg flex justify-center items-center gap-2">
-                    🖨️ Cerrar Caja e Imprimir
-                </button>
+
+            <!-- CONTENEDOR DINÁMICO DE CAJAS ACTIVAS -->
+            <div id="grid_cajas_activas" class="box-grid">
+                <!-- Las cajas se generan aquí mediante JS -->
             </div>
         </section>
 
-        <!-- VISTA 2: ANTIGUAMIENTO RADAR -->
-        <section id="vista_anti_radar" class="max-w-6xl mx-auto mt-8 p-4 vista-seccion hidden">
-            <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-yellow-500">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">🔍 Radar: Antiguamiento</h2>
-                    <button onclick="exportarExcel('ANTIGUAMIENTO')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow flex items-center gap-2 transition">
-                        📥 Descargar Reporte Excel
-                    </button>
+
+        <!-- ======================================================= -->
+        <!-- MÓDULO: PISTOLEO RECUPERADOS (CHECK-LIST) -->
+        <!-- ======================================================= -->
+        <section id="vista_pistoleo_recu" class="vista-seccion hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 border-t-4 border-t-green-500">
+                <h2 class="text-2xl font-bold text-slate-900 mb-1">♻️ Escáner de Recuperados (Check-List)</h2>
+                <p class="text-sm text-slate-500 mb-6">Pistolea los equipos que devolvieron los técnicos. Si la serie corresponde a la data enviada por Claro, bajará a la lista de "Listos".</p>
+                
+                <div class="bg-green-50 border-2 border-dashed border-green-300 rounded-xl p-6 text-center cursor-text">
+                    <input type="text" id="laser_recu" autocomplete="off" class="w-full text-center text-3xl font-mono font-bold bg-transparent outline-none text-green-950 placeholder-green-300" placeholder="ESCANEAR RECUPERADO AQUÍ...">
                 </div>
-                <div class="flex gap-4 mb-6">
-                    <input type="text" id="busqueda_anti" placeholder="Serie, Técnico o SOT..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-2/3 outline-none focus:border-blue-500">
-                    <select id="filtro_anti" class="border-2 border-gray-300 rounded-lg p-3 font-bold w-1/3 outline-none cursor-pointer">
-                        <option value="TODOS">Ver Todos</option>
-                        <option value="FALTA_BUSCAR">Falta Buscar (Sin rastreo)</option>
-                        <option value="ALMACEN">En Almacén</option>
-                        <option value="TECNICO">En poder de Técnico</option>
-                        <option value="SOT">Liquidados en SOT</option>
+                <div id="msg_val_recu" class="mt-3 text-center font-bold text-sm hidden p-2 rounded"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- PENDIENTES -->
+                <div class="bg-white border rounded-xl overflow-hidden shadow-sm flex flex-col h-[500px]">
+                    <div class="bg-rose-50 border-b border-rose-100 p-3 flex justify-between items-center">
+                        <h3 class="font-bold text-rose-800 text-sm">❌ FALTAN BUSCAR EN CAJAS</h3>
+                        <span id="contador_recu_falta" class="bg-rose-200 text-rose-800 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                    </div>
+                    <ul id="lista_recu_falta" class="divide-y overflow-y-auto flex-grow bg-slate-50 scroll-clean text-xs font-mono p-2"></ul>
+                </div>
+
+                <!-- LISTOS -->
+                <div class="bg-white border rounded-xl overflow-hidden shadow-sm flex flex-col h-[500px]">
+                    <div class="bg-emerald-50 border-b border-emerald-100 p-3 flex justify-between items-center">
+                        <h3 class="font-bold text-emerald-800 text-sm">✅ LISTOS (PISTOLEADOS)</h3>
+                        <span id="contador_recu_listo" class="bg-emerald-200 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                    </div>
+                    <ul id="lista_recu_listo" class="divide-y overflow-y-auto flex-grow bg-white scroll-clean text-xs font-mono p-2"></ul>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ======================================================= -->
+        <!-- MÓDULO: CRUCE SPACECOM (PURO) -->
+        <!-- ======================================================= -->
+        <section id="vista_cruce_spacecom" class="vista-seccion hidden max-w-3xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <h2 class="text-2xl font-bold text-slate-900 mb-1">📥 Cruce de Series (SpaceCom)</h2>
+                <p class="text-sm text-slate-500 mb-6">El sistema solo extraerá las SERIES de tu Excel y buscará cruzar con la Base de Datos para actualizar el estado, sin alterar las ciudades.</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">TIPO DE ARCHIVO QUE SUBES</label>
+                        <select id="cruce_tipo_archivo" class="w-full border rounded-lg p-3 font-semibold text-sm bg-slate-50 outline-none">
+                            <option value="TECNICOS">Stock Técnicos (Asignará quién tiene el equipo)</option>
+                            <option value="SOTS">Historial SOTs (Confirmará que ya fue instalado)</option>
+                            <option value="ALMACEN">Stock Almacén (Asignará que está libre en estante)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">MÓDULO DESTINO</label>
+                        <select id="cruce_tipo_flujo" class="w-full border rounded-lg p-3 font-semibold text-sm bg-slate-50 outline-none">
+                            <option value="ANTIGUAMIENTO">Antiguamiento</option>
+                            <option value="RECUPERADO">Recuperados</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ARCHIVO EXCEL</label>
+                        <input type="file" id="file_cruce" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 text-sm">
+                    </div>
+
+                    <button onclick="ejecutarCruceSpaceCom()" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-3.5 rounded-xl shadow-md transition text-sm">Ejecutar Cruce de Series</button>
+                    <div id="cruce_mensaje" class="hidden p-4 rounded-xl text-sm font-semibold text-center"></div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ======================================================= -->
+        <!-- MÓDULO: REPORTE WHATSAPP -->
+        <!-- ======================================================= -->
+        <section id="vista_reporte_tecnicos" class="vista-seccion hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">📱 Control Técnicos y WSP</h2>
+                        <p class="text-sm text-slate-500">Muestra los equipos retenidos (Sin SOT).</p>
+                    </div>
+                    <button onclick="cargarReporteTecnicos()" class="bg-slate-100 text-slate-700 font-bold px-4 py-2 rounded-lg text-sm hover:bg-slate-200">🔄 Actualizar</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1 border rounded-xl bg-slate-50 h-[500px] flex flex-col">
+                        <div class="p-3 bg-slate-200 font-bold text-xs uppercase text-slate-700">Técnicos (Antiguamiento)</div>
+                        <ul id="lista_tecnicos_pendientes" class="divide-y overflow-y-auto flex-grow scroll-clean"></ul>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <div id="panel_detalle_tecnico" class="hidden border rounded-xl p-5 bg-white shadow-sm">
+                            <div class="flex justify-between items-center border-b pb-4 mb-4">
+                                <h3 id="detalle_nombre_tecnico" class="text-lg font-bold text-slate-900">TÉCNICO</h3>
+                                <div class="flex gap-2">
+                                    <button onclick="copiarTextoWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg text-xs">📋 Copiar Texto</button>
+                                    <button onclick="copiarImagenWhatsApp()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-3 py-2 rounded-lg text-xs">📸 Copiar Imagen</button>
+                                </div>
+                            </div>
+
+                            <div id="tarjeta_whatsapp_captura" class="p-4 bg-white border rounded-xl">
+                                <div class="bg-blue-950 text-white p-3 rounded-lg text-center mb-3">
+                                    <h4 id="tarjeta_titulo_tecnico" class="font-bold uppercase text-sm">NOMBRE</h4>
+                                    <p class="text-xs text-blue-300">Devolución Obligatoria - Antiguamiento</p>
+                                </div>
+                                <table class="w-full text-xs text-left border-collapse border">
+                                    <thead class="bg-slate-100"><tr class="border-b"><th class="p-2 border-r">SKU</th><th class="p-2 border-r">Modelo</th><th class="p-2 border-r">Serie</th><th class="p-2">Días</th></tr></thead>
+                                    <tbody id="tarjeta_tbody_equipos" class="divide-y"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="panel_vacio_tecnico" class="border border-dashed rounded-xl p-12 text-center text-slate-400">Selecciona un técnico a la izquierda.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ======================================================= -->
+        <!-- MÓDULO: RADAR INVENTARIO -->
+        <!-- ======================================================= -->
+        <section id="vista_radar" class="vista-seccion hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900">🔍 Radar General</h2>
+                    <button onclick="exportarExcelRadar()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm">📥 Descargar Excel</button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <select id="radar_flujo" onchange="cargarRadar()" class="border rounded-lg p-2.5 text-sm bg-slate-50 font-bold outline-none"><option value="ANTIGUAMIENTO">Antiguamiento</option><option value="RECUPERADO">Recuperados</option></select>
+                    <select id="radar_filtro_estado" onchange="cargarRadar()" class="border rounded-lg p-2.5 text-sm bg-slate-50 outline-none">
+                        <option value="TODOS">Todos los Estados</option>
+                        <option value="PENDIENTE">Falta Buscar (Sin procesar)</option>
+                        <option value="ALMACEN">Supuesto Stock en Almacén</option>
+                        <option value="PISTOLEADO">Confirmado (Pistoleado en Caja)</option>
+                        <option value="TECNICO">Con Técnico / Contrata</option>
+                        <option value="INSTALADO">Instalados (SOT)</option>
                     </select>
+                    <input type="text" id="radar_busqueda" onkeyup="if(event.key==='Enter') cargarRadar()" placeholder="Buscar serie..." class="border rounded-lg p-2.5 text-sm outline-none">
                 </div>
-                <button onclick="cargarRadar('ANTIGUAMIENTO', 'busqueda_anti', 'filtro_anti', 'tbody_anti')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow mb-6">Realizar Búsqueda</button>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b-2">SKU</th><th class="p-3 border-b-2">Modelo</th><th class="p-3 border-b-2">Serie</th><th class="p-3 border-b-2">Ubicación / Estado</th><th class="p-3 border-b-2">Días</th></tr></thead><tbody id="tbody_anti"><tr><td colspan="5" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar...</td></tr></tbody></table>
+
+                <div class="overflow-x-auto border rounded-xl">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-xs border-b"><tr><th class="p-3">SKU</th><th class="p-3">Modelo</th><th class="p-3">Serie</th><th class="p-3">Estado Actual</th><th class="p-3">Días</th></tr></thead>
+                        <tbody id="tbody_radar" class="divide-y"></tbody>
+                    </table>
                 </div>
             </div>
         </section>
 
-        <!-- SUBIR SPACECOM ANTIGUAMIENTO -->
-        <section id="vista_anti_spacecom" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
-            <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-blue-500">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">📥 Cruce SpaceCom <span class="text-blue-600">(Antiguamiento)</span></h2>
-                <select id="tipo_spacecom_anti" class="w-full border-2 p-3 mb-4 font-bold rounded outline-none cursor-pointer">
-                    <option value="ALMACEN">SpaceCom: Stock de Almacén</option>
-                    <option value="TECNICOS">SpaceCom: Stock de Técnicos</option>
-                    <option value="SOTS">SpaceCom: Historial SOTs</option>
-                </select>
-                <input type="file" id="file_anti_spacecom" accept=".xlsx, .csv" class="w-full border-2 border-dashed p-4 mb-4 cursor-pointer">
-                <button onclick="procesarSpaceCom('file_anti_spacecom', 'tipo_spacecom_anti', 'ANTIGUAMIENTO', 'msg_anti_space')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded shadow">Cruzar Series</button>
-                <p id="msg_anti_space" class="mt-4 text-center font-bold"></p>
-            </div>
-        </section>
 
-        <!-- WHATSAPP ANTIGUAMIENTO -->
-        <section id="vista_anti_whatsapp" class="max-w-5xl mx-auto mt-8 p-4 vista-seccion hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">📱 Reporte WhatsApp Técnicos <span class="text-blue-600">(Antiguamiento)</span></h2>
-                <button onclick="cargarWhatsApp('ANTIGUAMIENTO', 'contenedor_anti_wa')" class="bg-blue-100 text-blue-800 px-4 py-2 rounded font-bold shadow">🔄 Actualizar</button>
-            </div>
-            <div id="contenedor_anti_wa" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-        </section>
-
-        <!-- VISTA 3: RECUPERADOS RADAR -->
-        <section id="vista_recu_radar" class="max-w-6xl mx-auto mt-8 p-4 vista-seccion hidden">
-            <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-green-500">
+        <!-- ======================================================= -->
+        <!-- MÓDULO: HISTORIAL DE CAJAS -->
+        <!-- ======================================================= -->
+        <section id="vista_historial_cajas" class="vista-seccion hidden max-w-6xl mx-auto space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">🔍 Radar: Recuperados</h2>
-                    <button onclick="exportarExcel('RECUPERADO')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow flex items-center gap-2 transition">
-                        📥 Descargar Reporte Excel
-                    </button>
+                    <h2 class="text-2xl font-bold text-slate-900">🖨️ Historial de Cajas Creadas</h2>
+                    <button onclick="cargarHistorialCajas()" class="bg-slate-100 text-slate-800 px-4 py-2 rounded-lg font-bold shadow hover:bg-slate-200 text-sm">🔄 Refrescar</button>
                 </div>
-                <div class="flex gap-4 mb-6">
-                    <input type="text" id="busqueda_recu" placeholder="Serie o Modelo..." class="border-2 border-gray-300 rounded-lg p-3 font-bold w-full outline-none focus:border-green-500">
-                </div>
-                <button onclick="cargarRadar('RECUPERADO', 'busqueda_recu', 'filtro_recu_dummy', 'tbody_recu')" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow mb-6">Realizar Búsqueda</button>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b-2">SKU</th><th class="p-3 border-b-2">Modelo</th><th class="p-3 border-b-2">Serie</th><th class="p-3 border-b-2">Estado</th></tr></thead><tbody id="tbody_recu"><tr><td colspan="4" class="text-center p-6 text-gray-500 italic">Haz clic en Buscar...</td></tr></tbody></table>
+                <div class="overflow-x-auto border rounded-xl">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead class="bg-slate-800 text-white text-xs uppercase border-b">
+                            <tr><th class="p-3">Caja # / Modelo</th><th class="p-3">Sede</th><th class="p-3">Total Equipos</th><th class="p-3 text-center">Acciones</th></tr>
+                        </thead>
+                        <tbody id="tbody_cajas" class="divide-y"><tr><td colspan="4" class="text-center p-6 text-slate-400">Cargando...</td></tr></tbody>
+                    </table>
                 </div>
             </div>
         </section>
 
-        <!-- VISTA 4: ADMIN CLARO -->
-        <section id="vista_admin" class="max-w-4xl mx-auto mt-8 p-4 vista-seccion hidden">
-            <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-red-600 mb-8">
-                <h2 class="text-2xl font-bold text-red-800 mb-2">⚙️ Carga Supervisor: ANTIGUAMIENTO</h2>
-                <p class="mb-4 text-gray-600 text-sm">Sube la data oficial de Claro. Extraerá Ciudad, SKU, Modelo y Serie (>40 días).</p>
-                <input type="file" id="file_admin_anti" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-red-300 bg-red-50 p-4 mb-4 cursor-pointer">
-                <button onclick="procesarAdmin('file_admin_anti', 'ANTIGUAMIENTO', 'msg_admin_anti')" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-4 rounded shadow">Procesar Data Supervisor</button>
-                <p id="msg_admin_anti" class="mt-4 text-center font-bold"></p>
+        <!-- MODAL IMPRESIÓN CAJA -->
+        <div id="modal_etiqueta" class="fixed inset-0 bg-slate-950/70 z-50 hidden flex justify-center items-center backdrop-blur-sm">
+            <div class="bg-white rounded-2xl p-6 w-[500px] max-w-[95%]">
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h3 id="modal_titulo_caja" class="text-lg font-bold">Etiqueta</h3>
+                    <button onclick="document.getElementById('modal_etiqueta').classList.add('hidden')" class="text-slate-400 hover:text-red-500 font-bold">✕</button>
+                </div>
+                <div id="modal_contenido_series" class="max-h-80 overflow-y-auto space-y-1 font-mono text-sm mb-4 border rounded p-3"></div>
+                <button onclick="window.print()" class="w-full bg-blue-900 text-white font-bold py-3 rounded-lg shadow">🖨️ Imprimir Guía</button>
             </div>
+        </div>
 
-            <div class="bg-white rounded-lg shadow-xl p-8 border-t-4 border-green-600">
-                <h2 class="text-2xl font-bold text-green-800 mb-2">⚙️ Carga Supervisor: RECUPERADOS</h2>
-                <p class="mb-4 text-gray-600 text-sm">Sube el reporte oficial de recuperados enviado por Claro.</p>
-                <input type="file" id="file_admin_recu" accept=".xlsx, .csv" class="w-full border-2 border-dashed border-green-300 bg-green-50 p-4 mb-4 cursor-pointer">
-                <button onclick="procesarAdmin('file_admin_recu', 'RECUPERADO', 'msg_admin_recu')" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-4 rounded shadow">Procesar Data Recuperados</button>
-                <p id="msg_admin_recu" class="mt-4 text-center font-bold"></p>
+
+        <!-- ======================================================= -->
+        <!-- MÓDULO: ADMIN CLARO -->
+        <!-- ======================================================= -->
+        <section id="vista_admin" class="vista-seccion hidden max-w-4xl mx-auto space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <h2 class="text-2xl font-bold text-red-800 mb-2">⚙️ Data Maestra (Supervisor Claro)</h2>
+                <p class="text-sm text-slate-500 mb-6">Extrae Ciudad, SKU, Modelo y Serie. Todos nacen en estado "FALTA BUSCAR".</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border rounded-xl p-5 bg-red-50">
+                        <h3 class="font-bold text-red-900 mb-2">Cargar Antiguamiento (>40 días)</h3>
+                        <input type="file" id="file_admin_anti" accept=".xlsx, .csv" class="w-full text-xs border bg-white p-2 rounded mb-3">
+                        <button onclick="procesarMasterSupervisor('file_admin_anti', 'ANTIGUAMIENTO', 'msg_admin_anti')" class="w-full bg-red-700 text-white font-bold py-2 rounded text-sm">Subir Antiguamiento</button>
+                        <p id="msg_admin_anti" class="mt-2 text-xs font-bold text-center"></p>
+                    </div>
+                    <div class="border rounded-xl p-5 bg-green-50">
+                        <h3 class="font-bold text-green-900 mb-2">Cargar Recuperados</h3>
+                        <input type="file" id="file_admin_recu" accept=".xlsx, .csv" class="w-full text-xs border bg-white p-2 rounded mb-3">
+                        <button onclick="procesarMasterSupervisor('file_admin_recu', 'RECUPERADO', 'msg_admin_recu')" class="w-full bg-green-700 text-white font-bold py-2 rounded text-sm">Subir Recuperados</button>
+                        <p id="msg_admin_recu" class="mt-2 text-xs font-bold text-center"></p>
+                    </div>
+                </div>
             </div>
         </section>
 
-    </div>
+    </main>
 
+    <!-- MOTOR LÓGICO V4.0 -->
     <script>
         const SUPABASE_URL = 'https://fbxzhasfdvkqunnebkij.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY';
         const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const sidebar = document.getElementById('sidebar');
-        function toggleMenu() { sidebar.classList.toggle('-translate-x-full'); }
-        function cambiarVista(idVista) {
+        const normalize = (txt) => (txt||'').toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+        // 1. NAVEGACIÓN
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+        function navegar(idVista) {
             document.querySelectorAll('.vista-seccion').forEach(v => v.classList.add('hidden'));
             document.getElementById(idVista).classList.remove('hidden');
-            sidebar.classList.add('-translate-x-full'); 
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            
+            if(idVista === 'vista_radar') cargarRadar();
+            if(idVista === 'vista_reporte_tecnicos') cargarReporteTecnicos();
+            if(idVista === 'vista_historial_cajas') cargarHistorialCajas();
+            if(idVista === 'vista_pistoleo_recu') cargarListasRecuperados();
+            if(idVista === 'vista_pistoleo_anti') document.getElementById('laser_anti').focus();
+        }
+        function alCambiarSede() {
+            renderBoxes(); 
+            if(!document.getElementById('vista_radar').classList.contains('hidden')) cargarRadar();
+            if(!document.getElementById('vista_reporte_tecnicos').classList.contains('hidden')) cargarReporteTecnicos();
+            if(!document.getElementById('vista_pistoleo_recu').classList.contains('hidden')) cargarListasRecuperados();
         }
 
+        // 2. ADMIN SEC
         const modalAdmin = document.getElementById('modal_admin');
         const inputPassAdmin = document.getElementById('input_pass_admin');
         const errorPassAdmin = document.getElementById('error_pass_admin');
-        function abrirModalAdmin() { sidebar.classList.add('-translate-x-full'); modalAdmin.classList.remove('hidden'); inputPassAdmin.value=''; errorPassAdmin.classList.add('hidden'); setTimeout(()=>inputPassAdmin.focus(),100); }
+        function abrirModalAdmin() { document.getElementById('sidebar').classList.add('-translate-x-full'); modalAdmin.classList.remove('hidden'); inputPassAdmin.value=''; errorPassAdmin.classList.add('hidden'); setTimeout(()=>inputPassAdmin.focus(),100); }
         function cerrarModalAdmin() { modalAdmin.classList.add('hidden'); }
-        function validarPasswordAdmin() {
-            if(inputPassAdmin.value === "claro123") { cerrarModalAdmin(); cambiarVista('vista_admin'); } 
+        function validarAdmin() {
+            if(inputPassAdmin.value === "claro123") { cerrarModalAdmin(); navegar('vista_admin'); } 
             else { errorPassAdmin.classList.remove('hidden'); inputPassAdmin.value=''; inputPassAdmin.focus(); }
-        }
-        inputPassAdmin.addEventListener('keypress', (e) => { if(e.key === 'Enter') validarPasswordAdmin(); });
-
-        let numeroCaja = 1, equiposEnCaja = 0;
-        function actualizarNombreCaja() {
-            const num = String(numeroCaja).padStart(3, '0');
-            document.getElementById('caja_activa').value = `${document.getElementById('sede_selector').value.substring(0,3)}-${num}`;
-        }
-        document.getElementById('sede_selector').addEventListener('change', actualizarNombreCaja);
-        actualizarNombreCaja();
-        
-        function cerrarCaja() {
-            if(equiposEnCaja === 0) return alert("Caja vacía.");
-            alert(`✅ Caja Cerrada.`);
-            document.getElementById('lista_escaneados').innerHTML = ''; equiposEnCaja = 0; document.getElementById('contador_caja').innerText = '0';
-            numeroCaja++; actualizarNombreCaja(); document.getElementById('input_laser').focus();
         }
 
         const playSound = (type) => {
@@ -247,278 +363,352 @@
             } catch(err) {}
         };
 
-        // PISTOLEO ESTRICTO
-        const inputLaser = document.getElementById('input_laser');
-        const msgVal = document.getElementById('msg_validacion');
-        const resDiv = document.getElementById('resultado_cruce');
-        
-        inputLaser.addEventListener('keypress', async (e) => {
+        // ==========================================
+        // MÓDULO: PISTOLEO Y AUTO-CAJAS (ANTIGUAMIENTO)
+        // ==========================================
+        let autoCajas = {}; // { "SKU_123": { id: "ARE-123-01", series: [], modelo: "ROUTER..." } }
+
+        function generarIdCaja(sku) {
+            const sede = document.getElementById('sede_selector').value.substring(0,3);
+            const r = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            return `${sede}-CAJA-${sku}-${r}`;
+        }
+
+        function renderBoxes() {
+            const grid = document.getElementById('grid_cajas_activas');
+            grid.innerHTML = '';
+            Object.keys(autoCajas).forEach(sku => {
+                const box = autoCajas[sku];
+                grid.innerHTML += `
+                    <div class="bg-white border rounded-xl shadow-sm p-4 flex flex-col">
+                        <div class="flex justify-between items-start border-b pb-2 mb-2">
+                            <div><span class="text-[10px] font-bold text-blue-500 tracking-widest block">CAJA ACTIVA</span><span class="font-mono font-bold text-slate-800">${box.id}</span></div>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-lg">${box.series.length} eq</span>
+                        </div>
+                        <p class="text-xs text-slate-500 font-mono mb-2">SKU: ${sku} <br> <span class="text-[10px]">${box.modelo}</span></p>
+                        <div class="flex-grow max-h-24 overflow-y-auto text-xs font-mono bg-slate-50 p-2 rounded mb-3 border">
+                            ${box.series.map(s => `✓ ${s}`).join('<br>')}
+                        </div>
+                        <button onclick="cerrarCajaEspecifica('${sku}')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded text-xs">📦 Cerrar e Imprimir</button>
+                    </div>`;
+            });
+        }
+
+        const laserAnti = document.getElementById('laser_anti');
+        const msgAnti = document.getElementById('msg_val_anti');
+
+        laserAnti.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const serie = inputLaser.value.trim().toUpperCase();
-                const tipoFlujo = document.getElementById('tipo_flujo_pistoleo').value;
+                const serie = laserAnti.value.trim().toUpperCase();
                 const sedeActual = document.getElementById('sede_selector').value.toUpperCase();
-                inputLaser.value = ''; 
+                laserAnti.value = ''; 
                 if(!serie) return;
 
-                msgVal.className = 'mt-4 text-center font-bold text-lg p-3 rounded shadow-sm bg-blue-100 text-blue-800 block';
-                msgVal.innerText = `Buscando serie en ${tipoFlujo}...`;
-                resDiv.classList.add('hidden');
+                msgAnti.className = 'mt-4 text-center font-bold text-sm p-3 rounded bg-blue-100 text-blue-800 block';
+                msgAnti.innerText = `Validando serie...`;
 
-                const { data: equipoDB, error: errDB } = await db.from('cruce_spacecom').select('*').eq('serie', serie).eq('tipo_flujo', tipoFlujo).single();
+                const { data: eqDB, error: errDB } = await db.from('cruce_spacecom').select('*').eq('serie', serie).eq('tipo_flujo', 'ANTIGUAMIENTO').single();
                 
-                if (!equipoDB || errDB) {
+                if (!eqDB || errDB) {
                     playSound('error');
-                    msgVal.className = 'mt-4 text-center font-bold text-lg p-3 rounded shadow-sm bg-red-100 text-red-800 block';
-                    msgVal.innerText = `❌ ERROR: La serie [ ${serie} ] NO pertenece al módulo de ${tipoFlujo}.`;
+                    msgAnti.className = 'mt-4 text-center font-bold text-sm p-3 rounded bg-red-100 text-red-800 block';
+                    msgAnti.innerText = `❌ RECHAZADO: Serie no existe en Antiguamiento.`;
+                    return;
+                }
+                if (eqDB.ciudad && eqDB.ciudad.toUpperCase() !== sedeActual) {
+                    playSound('error');
+                    msgAnti.className = 'mt-4 text-center font-bold text-sm p-3 rounded bg-amber-100 text-amber-800 block';
+                    msgAnti.innerText = `⚠️ RECHAZADO: Equipo pertenece a ${eqDB.ciudad}, no a ${sedeActual}.`;
                     return;
                 }
 
-                if (equipoDB.ciudad && equipoDB.ciudad.toUpperCase() !== sedeActual) {
-                    playSound('error');
-                    msgVal.className = 'mt-4 text-center font-bold text-lg p-3 rounded shadow-sm bg-yellow-100 text-yellow-800 block';
-                    msgVal.innerText = `⚠️ ADVERTENCIA: Esta serie pertenece a [ ${equipoDB.ciudad} ] y estás en [ ${sedeActual} ].`;
-                    return;
+                // Equipo Válido. Procesamos Auto-caja.
+                playSound('success');
+                const sku = eqDB.sku || 'SIN-SKU';
+                if(!autoCajas[sku]) autoCajas[sku] = { id: generarIdCaja(sku), series: [], modelo: eqDB.modelo || 'Sin descripción' };
+                
+                // Si la serie ya está en la caja, evitamos duplicado visual
+                if(!autoCajas[sku].series.includes(serie)) {
+                    autoCajas[sku].series.push(serie);
+                    // Actualizamos BD: Marcamos pistoleado y guardamos en historial
+                    await db.from('cruce_spacecom').update({ pistoleado: true }).eq('serie', serie);
+                    await db.from('equipos_escaneados').insert([{ serie: serie, sede: sedeActual, tipo: 'ANTIGUAMIENTO', caja: autoCajas[sku].id }]);
                 }
 
-                msgVal.className = 'mt-4 text-center font-bold text-lg p-3 rounded shadow-sm bg-green-100 text-green-800 block';
-                msgVal.innerText = `✅ EQUIPO VÁLIDO ENCONTRADO`;
-
-                resDiv.className = 'mt-4 p-4 rounded-lg border-l-4 shadow-sm block bg-green-50 border-green-500';
-                document.getElementById('res_serie').innerText = `Serie: ${serie} ${equipoDB.dias_antiguedad ? '('+equipoDB.dias_antiguedad+' Días)' : ''}`;
-                
-                let ubicacion = "FALTA BUSCAR EN ESTANTE";
-                if(equipoDB.tecnico_asignado) ubicacion = `Técnico: ${equipoDB.tecnico_asignado}`;
-                else if(equipoDB.sot_instalacion) ubicacion = `SOT: ${equipoDB.sot_instalacion}`;
-                document.getElementById('res_ubicacion').innerText = `Ubicación: ${ubicacion}`;
-
-                await db.from('equipos_escaneados').insert([{ serie: serie, sede: sedeActual, tipo: tipoFlujo }]);
-                playSound('success'); 
-                
-                equiposEnCaja++; document.getElementById('contador_caja').innerText = equiposEnCaja;
-                const li = document.createElement('li'); li.className = 'text-sm font-mono bg-gray-50 p-2 rounded border flex justify-between';
-                li.innerHTML = `<span class="text-green-600 font-bold">✓ ${serie}</span>`;
-                document.getElementById('lista_escaneados').prepend(li); 
+                msgAnti.className = 'mt-4 text-center font-bold text-sm p-3 rounded bg-emerald-100 text-emerald-800 block';
+                msgAnti.innerText = `✅ ACEPTADO: Asignado a caja de SKU ${sku}`;
+                renderBoxes();
             }
         });
 
-        async function exportarExcel(tipoFlujo) {
-            const sedeActual = document.getElementById('sede_selector').value.toUpperCase();
-            alert(`Generando reporte Excel de ${tipoFlujo} para ${sedeActual}...`);
-            
-            const { data, error } = await db.from('cruce_spacecom').select('*').eq('tipo_flujo', tipoFlujo).ilike('ciudad', sedeActual);
-            if (error || !data || data.length === 0) return alert(`No hay datos registrados para ${sedeActual}.`);
-
-            const datosParaExcel = data.map(eq => {
-                let ubicacion = "FALTA BUSCAR EN ESTANTE";
-                if(eq.tecnico_asignado) ubicacion = `TÉCNICO: ${eq.tecnico_asignado}`;
-                else if(eq.sot_instalacion) ubicacion = `SOT: ${eq.sot_instalacion}`;
-
-                return {
-                    "CIUDAD": eq.ciudad || '',
-                    "SKU": eq.sku || '',
-                    "MODELO": eq.modelo || '',
-                    "SERIE": eq.serie,
-                    "ESTADO / UBICACIÓN": ubicacion,
-                    "DÍAS": eq.dias_antiguedad || 0,
-                    "TIPO": eq.tipo_flujo
-                };
-            });
-
-            const worksheet = XLSX.utils.json_to_sheet(datosParaExcel);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
-            XLSX.writeFile(workbook, `Reporte_${tipoFlujo}_${sedeActual}.xlsx`);
+        function cerrarCajaEspecifica(sku) {
+            const box = autoCajas[sku];
+            alert(`✅ Caja ${box.id} cerrada y lista para imprimir.`);
+            delete autoCajas[sku];
+            renderBoxes();
+            cargarHistorialCajas(); // Refrescar en memoria si el modal se abre
+            abrirEtiquetaCaja(box.id, box.series);
         }
 
-        const normalizeKey = (key) => key.toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        // =======================================================
+        // MÓDULO: PISTOLEO RECUPERADOS (CHECK-LIST)
+        // =======================================================
+        const laserRecu = document.getElementById('laser_recu');
+        const msgRecu = document.getElementById('msg_val_recu');
+        let listaRecuPendientes = [];
+        let listaRecuListos = [];
 
-        // 1. CARGA SUPERVISOR (Nace sin técnico ni SOT, marcados como FALTA BUSCAR)
-        async function procesarAdmin(inputId, tipoFlujo, msgId) {
-            const fileInput = document.getElementById(inputId); const msgLabel = document.getElementById(msgId);
-            const file = fileInput.files[0]; if (!file) return alert("Selecciona un archivo");
-            msgLabel.innerHTML = "<span class='text-blue-600'>Procesando Master del Supervisor...</span>";
+        async function cargarListasRecuperados() {
+            const sede = document.getElementById('sede_selector').value.toUpperCase();
+            const { data } = await db.from('cruce_spacecom').select('*').eq('tipo_flujo', 'RECUPERADO').ilike('ciudad', sede);
+            if(!data) return;
+
+            listaRecuPendientes = data.filter(d => !d.pistoleado);
+            listaRecuListos = data.filter(d => d.pistoleado);
+            renderListasRecu();
+        }
+
+        function renderListasRecu() {
+            const uiPendiente = document.getElementById('lista_recu_falta');
+            const uiListo = document.getElementById('lista_recu_listo');
             
+            document.getElementById('contador_recu_falta').innerText = listaRecuPendientes.length;
+            document.getElementById('contador_recu_listo').innerText = listaRecuListos.length;
+
+            uiPendiente.innerHTML = listaRecuPendientes.map(eq => `<li class="p-2 border-b text-rose-900">${eq.serie} <span class="text-rose-400 text-[10px] ml-2">${eq.modelo || ''}</span></li>`).join('');
+            uiListo.innerHTML = listaRecuListos.map(eq => `<li class="p-2 border-b text-emerald-900">✓ ${eq.serie}</li>`).join('');
+        }
+
+        laserRecu.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const serie = laserRecu.value.trim().toUpperCase();
+                laserRecu.value = '';
+                if(!serie) return;
+
+                const index = listaRecuPendientes.findIndex(eq => eq.serie === serie);
+                if(index === -1) {
+                    // Ver si ya fue pistoleado
+                    if(listaRecuListos.some(eq => eq.serie === serie)) {
+                        msgRecu.className = 'mt-3 text-center font-bold text-sm p-2 rounded bg-amber-100 text-amber-800 block';
+                        msgRecu.innerText = "⚠️ Este equipo ya fue escaneado.";
+                    } else {
+                        playSound('error');
+                        msgRecu.className = 'mt-3 text-center font-bold text-sm p-2 rounded bg-rose-100 text-rose-800 block';
+                        msgRecu.innerText = "❌ ERROR: Serie no pertenece a Recuperados.";
+                    }
+                    return;
+                }
+
+                // Mover de lista y actualizar DB
+                playSound('success');
+                const eq = listaRecuPendientes.splice(index, 1)[0];
+                eq.pistoleado = true;
+                listaRecuListos.unshift(eq); // poner arriba
+                renderListasRecu();
+
+                msgRecu.className = 'mt-3 text-center font-bold text-sm p-2 rounded bg-emerald-100 text-emerald-800 block';
+                msgRecu.innerText = "✅ RECUPERADO CONFIRMADO";
+
+                await db.from('cruce_spacecom').update({ pistoleado: true }).eq('serie', serie);
+                // Guardarlo en caja genérica de recuperados
+                const cajaGenerica = `RECUP-${document.getElementById('sede_selector').value.substring(0,3)}-${new Date().toISOString().split('T')[0]}`;
+                await db.from('equipos_escaneados').insert([{ serie: serie, sede: document.getElementById('sede_selector').value, tipo: 'RECUPERADO', caja: cajaGenerica }]);
+            }
+        });
+
+        // ==========================================
+        // CARGA ADMIN CLARO Y SPACECOM (LÓGICA PURA)
+        // ==========================================
+        async function procesarMasterSupervisor(inputId, tipoFlujo, msgId) {
+            const input = document.getElementById(inputId); const msg = document.getElementById(msgId);
+            const file = input.files[0]; if(!file) return alert("Selecciona archivo.");
+            msg.className="text-blue-600 block mt-2"; msg.innerText="Cargando...";
+
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
-                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
-                
-                const datosMaestros = [];
-                jsonData.forEach(fila => {
-                    let eq_serie='', eq_sku='', eq_modelo='', eq_dias=0, eq_ciudad='';
-                    Object.keys(fila).forEach(k => {
-                        const nk = normalizeKey(k);
-                        if (nk.includes('SERIE') || nk==='S/N' || nk==='IMEI') eq_serie = fila[k];
-                        if (nk==='MATERIAL' || nk==='SKU' || nk==='CODIGO') eq_sku = fila[k];
-                        if (nk.includes('DESCRIPCION') || nk.includes('MODELO')) eq_modelo = fila[k];
-                        if (nk.includes('DIAS')) eq_dias = fila[k];
-                        if (nk.includes('CIUDAD') || nk.includes('SEDE')) eq_ciudad = fila[k];
+                const data = new Uint8Array(e.target.result); const wb = XLSX.read(data, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+                const validos = [];
+
+                rows.forEach(r => {
+                    let s='', sk='', m='', d=0, c='';
+                    Object.keys(r).forEach(k => {
+                        const nk = normalize(k);
+                        if(nk.includes('SERIE') || nk==='S/N') s = r[k];
+                        if(nk==='MATERIAL' || nk==='SKU' || nk==='CODIGO') sk = r[k];
+                        if(nk.includes('DESCRIPCION') || nk.includes('MODELO')) m = r[k];
+                        if(nk.includes('DIAS')) d = r[k];
+                        if(nk.includes('CIUDAD') || nk.includes('SEDE')) c = r[k];
                     });
 
-                    const diasNum = parseInt(eq_dias || 0);
-                    if (eq_serie && (tipoFlujo === 'RECUPERADO' || diasNum >= 40)) {
-                        datosMaestros.push({
-                            serie: eq_serie.toString().trim().toUpperCase(),
-                            sku: eq_sku.toString().trim(), 
-                            modelo: eq_modelo.toString().trim(),
-                            dias_antiguedad: diasNum, 
-                            tipo_flujo: tipoFlujo,
-                            ciudad: (eq_ciudad || 'AREQUIPA').toString().trim().toUpperCase(),
-                            tecnico_asignado: null,
-                            sot_instalacion: null
+                    const numD = parseInt(d||0);
+                    if(s && (tipoFlujo === 'RECUPERADO' || numD >= 40)) {
+                        validos.push({
+                            serie: s.toString().trim().toUpperCase(), sku: sk.toString().trim(), modelo: m.toString().trim(),
+                            dias_antiguedad: numD, ciudad: (c||'AREQUIPA').toString().trim().toUpperCase(),
+                            tipo_flujo: tipoFlujo, tecnico_asignado: null, sot_instalacion: null, pistoleado: false
                         });
                     }
                 });
 
-                if(datosMaestros.length === 0) return msgLabel.innerHTML = "<span class='text-red-600'>⚠️ No se encontraron equipos válidos.</span>";
-                msgLabel.innerHTML = `<span class='text-blue-600'>Guardando ${datosMaestros.length} equipos...</span>`;
+                if(validos.length===0) return msg.innerHTML="<span class='text-red-600'>Cero equipos válidos.</span>";
                 
-                for (let i = 0; i < Math.ceil(datosMaestros.length/1000); i++) {
-                    const lote = datosMaestros.slice(i*1000, (i+1)*1000);
-                    const {error} = await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
-                    if(error) return msgLabel.innerHTML = `<span class='text-red-600'>Error BD: ${error.message}</span>`;
+                for (let i = 0; i < Math.ceil(validos.length/1000); i++) {
+                    const lote = validos.slice(i*1000, (i+1)*1000);
+                    await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                 }
-                msgLabel.innerHTML = `<span class='text-green-600'>✅ Data del Supervisor cargada (Estado inicial: Falta buscar).</span>`; fileInput.value = "";
+                msg.innerHTML=`<span class='text-green-600'>✅ ${validos.length} equipos cargados (FALTA BUSCAR).</span>`; input.value="";
             }; reader.readAsArrayBuffer(file);
         }
 
-        // 2. CRUCE PURO DE SERIES CON SPACECOM
-        async function procesarSpaceCom(inputId, selectId, tipoFlujo, msgId) {
-            const fileInput = document.getElementById(inputId); 
-            const msgLabel = document.getElementById(msgId);
-            const tipoReporte = document.getElementById(selectId).value; // ALMACEN, TECNICOS, SOTS
-            const file = fileInput.files[0]; 
-            if (!file) return alert("Selecciona un archivo");
+        async function ejecutarCruceSpaceCom() {
+            const input = document.getElementById('file_cruce'); const msg = document.getElementById('cruce_mensaje');
+            const flujo = document.getElementById('cruce_tipo_flujo').value; const tipo = document.getElementById('cruce_tipo_archivo').value;
+            const file = input.files[0]; if(!file) return alert("Seleccione archivo.");
             
-            msgLabel.innerHTML = "<span class='text-blue-600'>Leyendo SpaceCom y cruzando series...</span>";
+            msg.className="block bg-blue-50 text-blue-900 p-4 rounded text-sm"; msg.innerText="Extrayendo series...";
 
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result); 
-                const workbook = XLSX.read(data, { type: 'array' });
-                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+                const data = new Uint8Array(e.target.result); const wb = XLSX.read(data, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
                 
-                const mapaSpaceCom = new Map();
-                jsonData.forEach(fila => {
-                    let eq_serie = '', eq_valor = '';
-                    Object.keys(fila).forEach(k => {
-                        const nk = normalizeKey(k);
-                        if (nk.includes('SERIE') || nk === 'S/N' || nk === 'IMEI') eq_serie = fila[k];
-                        if (tipoReporte === 'TECNICOS' && (nk.includes('TECNICO') || nk.includes('NOMBRE'))) eq_valor = fila[k];
-                        if (tipoReporte === 'SOTS' && (nk === 'SOT' || nk === 'ORDEN')) eq_valor = fila[k];
+                const mapaSpace = new Map();
+                rows.forEach(r => {
+                    let s='', v='';
+                    Object.keys(r).forEach(k => {
+                        const nk = normalize(k);
+                        if(nk.includes('SERIE') || nk==='S/N' || nk==='IMEI') s = r[k];
+                        if(tipo==='TECNICOS' && (nk.includes('TECNICO') || nk.includes('CONTRATA') || nk.includes('NOMBRE'))) v = r[k];
+                        if(tipo==='SOTS' && (nk==='SOT' || nk==='ORDEN')) v = r[k];
                     });
-
-                    const sl = (eq_serie || '').toString().trim().toUpperCase();
-                    const vl = (eq_valor || '').toString().trim();
-                    if (sl) {
-                        mapaSpaceCom.set(sl, vl);
-                    }
+                    if(s) mapaSpace.set((s).toString().trim().toUpperCase(), (v).toString().trim());
                 });
 
-                if (mapaSpaceCom.size === 0) {
-                    msgLabel.innerHTML = "<span class='text-red-600'>⚠️ No se detectaron series en el archivo.</span>";
-                    return;
-                }
-
-                const { data: dbData, error: dbError } = await db.from('cruce_spacecom').select('serie').eq('tipo_flujo', tipoFlujo);
-                if (dbError) {
-                    msgLabel.innerHTML = `<span class='text-red-600'>Error al consultar BD: ${dbError.message}</span>`;
-                    return;
-                }
-
+                const { data: dbData } = await db.from('cruce_spacecom').select('serie').eq('tipo_flujo', flujo);
                 const seriesEnBD = new Set(dbData.map(d => d.serie));
-                const actualizaciones = [];
+                const acts = [];
 
-                mapaSpaceCom.forEach((valor, serie) => {
-                    if (seriesEnBD.has(serie)) {
-                        if (tipoReporte === 'ALMACEN') {
-                            actualizaciones.push({ serie: serie, tecnico_asignado: null, sot_instalacion: null, tipo_flujo: tipoFlujo });
-                        } else if (tipoReporte === 'TECNICOS') {
-                            actualizaciones.push({ serie: serie, tecnico_asignado: valor || null, tipo_flujo: tipoFlujo });
-                        } else if (tipoReporte === 'SOTS') {
-                            actualizaciones.push({ serie: serie, sot_instalacion: valor || null, tipo_flujo: tipoFlujo });
-                        }
+                mapaSpace.forEach((val, ser) => {
+                    if(seriesEnBD.has(ser)) {
+                        if(tipo==='ALMACEN') acts.push({ serie: ser, tecnico_asignado: 'EN ALMACEN', sot_instalacion: null });
+                        if(tipo==='TECNICOS') acts.push({ serie: ser, tecnico_asignado: val||'CONTRATA', sot_instalacion: null });
+                        if(tipo==='SOTS') acts.push({ serie: ser, sot_instalacion: val||'LIQUIDADO' });
                     }
                 });
 
-                if (actualizaciones.length === 0) {
-                    msgLabel.innerHTML = "<span class='text-yellow-600'>⚠️ Ninguna serie de SpaceCom coincide con la Base Maestra.</span>";
-                    return;
+                if(acts.length===0) return msg.innerHTML="<span class='text-amber-600'>Ninguna serie cruzó.</span>";
+                
+                for (let i=0; i<Math.ceil(acts.length/1000); i++) {
+                    const lote = acts.slice(i*1000, (i+1)*1000);
+                    await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
                 }
-
-                msgLabel.innerHTML = `<span class='text-blue-600'>Actualizando ${actualizaciones.length} equipos encontrados...</span>`;
-
-                for (let i = 0; i < Math.ceil(actualizaciones.length / 1000); i++) {
-                    const lote = actualizaciones.slice(i * 1000, (i + 1) * 1000);
-                    const { error: errUp } = await db.from('cruce_spacecom').upsert(lote, { onConflict: 'serie' });
-                    if (errUp) {
-                        msgLabel.innerHTML = `<span class='text-red-600'>Error al actualizar: ${errUp.message}</span>`;
-                        return;
-                    }
-                }
-
-                msgLabel.innerHTML = `<span class='text-green-600'>✅ ¡Cruce Exitoso! ${actualizaciones.length} series actualizadas.</span>`;
-                fileInput.value = "";
-            };
-            reader.readAsArrayBuffer(file);
+                msg.innerHTML=`<span class='text-green-600'>✅ ${acts.length} equipos actualizados.</span>`; input.value="";
+            }; reader.readAsArrayBuffer(file);
         }
 
-        // RADAR CORREGIDO (Muestra FALTA BUSCAR si no están en SpaceCom)
-        async function cargarRadar(tipoFlujo, inputId, filtroId, tbodyId) {
-            const termino = document.getElementById(inputId).value.trim().toUpperCase();
-            const filtro = document.getElementById(filtroId) ? document.getElementById(filtroId).value : 'TODOS';
-            const sedeActual = document.getElementById('sede_selector').value.toUpperCase();
-            const tbody = document.getElementById(tbodyId);
+        // ==========================================
+        // RADAR GENERAL
+        // ==========================================
+        let datosRadarCache = [];
+        async function cargarRadar() {
+            const sede = document.getElementById('sede_selector').value.toUpperCase();
+            const flujo = document.getElementById('radar_flujo').value;
+            const filtro = document.getElementById('radar_filtro_estado').value;
+            const busq = document.getElementById('radar_busqueda').value.trim().toUpperCase();
+            const tbody = document.getElementById('tbody_radar');
             tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-blue-600">Buscando...</td></tr>';
 
-            let query = db.from('cruce_spacecom').select('*').eq('tipo_flujo', tipoFlujo).ilike('ciudad', sedeActual).limit(500);
-            if (termino) query = query.or(`serie.ilike.%${termino}%,tecnico_asignado.ilike.%${termino}%,sot_instalacion.ilike.%${termino}%,modelo.ilike.%${termino}%`);
-            
-            if (filtro === 'FALTA_BUSCAR') query = query.is('tecnico_asignado', null).is('sot_instalacion', null);
-            else if (filtro === 'ALMACEN') query = query.is('tecnico_asignado', null).is('sot_instalacion', null);
-            else if (filtro === 'TECNICO') query = query.not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '');
-            else if (filtro === 'SOT') query = query.not('sot_instalacion', 'is', null).neq('sot_instalacion', '').neq('sot_instalacion', 'EMPTY');
+            let q = db.from('cruce_spacecom').select('*').eq('tipo_flujo', flujo).ilike('ciudad', sede).limit(1000);
+            if(busq) q = q.or(`serie.ilike.%${busq}%,tecnico_asignado.ilike.%${busq}%,sot_instalacion.ilike.%${busq}%,sku.ilike.%${busq}%`);
 
-            const { data } = await query;
-            if (!data || data.length === 0) return tbody.innerHTML = `<tr><td colspan="5" class="text-center p-6 text-gray-500">Sin resultados para ${sedeActual}.</td></tr>`;
+            const { data } = await q;
+            if(!data || data.length===0) { tbody.innerHTML='<tr><td colspan="5" class="text-center p-6 text-slate-400">Sin datos.</td></tr>'; return; }
 
-            tbody.innerHTML = '';
-            data.forEach(eq => {
-                let ubicacion = '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR EN ESTANTE</span>';
-                if (eq.tecnico_asignado) ubicacion = `<span class="font-bold text-gray-700">Técnico: </span>${eq.tecnico_asignado}`;
-                else if (eq.sot_instalacion && eq.sot_instalacion !== 'EMPTY') ubicacion = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">SOT: ${eq.sot_instalacion}</span>`;
+            const filtrados = data.filter(eq => {
+                const isSot = !!eq.sot_instalacion;
+                const isAlm = eq.tecnico_asignado === 'EN ALMACEN' || eq.pistoleado; // SpaceCom o Láser
+                const isTec = !!eq.tecnico_asignado && !isAlm;
+                
+                if(filtro==='INSTALADO') return isSot;
+                if(filtro==='ALMACEN') return isAlm && !isSot;
+                if(filtro==='TECNICO') return isTec && !isSot;
+                if(filtro==='PENDIENTE') return !isSot && !isAlm && !isTec;
+                return true;
+            });
+            datosRadarCache = filtrados;
 
-                const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50';
-                if (tipoFlujo === 'ANTIGUAMIENTO') {
-                    tr.innerHTML = `<td class="p-3 text-sm text-gray-600 font-mono">${eq.sku || '-'}</td><td class="p-3 text-sm">${eq.modelo || '-'}</td><td class="p-3 font-mono font-bold">${eq.serie}</td><td class="p-3">${ubicacion}</td><td class="p-3 text-red-600 font-bold">${eq.dias_antiguedad || 0}</td>`;
-                } else {
-                    tr.innerHTML = `<td class="p-3 text-sm text-gray-600 font-mono">${eq.sku || '-'}</td><td class="p-3 text-sm">${eq.modelo || '-'}</td><td class="p-3 font-mono font-bold">${eq.serie}</td><td class="p-3">${ubicacion}</td>`;
-                }
-                tbody.appendChild(tr);
+            document.getElementById('stat_total').innerText = data.length;
+            document.getElementById('stat_almacen').innerText = data.filter(e => (e.tecnico_asignado==='EN ALMACEN' || e.pistoleado) && !e.sot_instalacion).length;
+            document.getElementById('stat_tecnico').innerText = data.filter(e => e.tecnico_asignado && e.tecnico_asignado!=='EN ALMACEN' && !e.sot_instalacion).length;
+            document.getElementById('stat_sot').innerText = data.filter(e => e.sot_instalacion).length;
+
+            tbody.innerHTML='';
+            filtrados.forEach(eq => {
+                let badge = '<span class="badge-pendiente px-2 py-1 rounded text-xs font-bold">FALTA BUSCAR EN ESTANTE</span>';
+                if(eq.sot_instalacion) badge = `<span class="badge-sot px-2 py-1 rounded text-xs font-bold">INSTALADO (SOT: ${eq.sot_instalacion})</span>`;
+                else if(eq.pistoleado) badge = `<span class="bg-blue-100 text-blue-800 border border-blue-200 px-2 py-1 rounded text-xs font-bold">CAJA PISTOLEADA</span>`;
+                else if(eq.tecnico_asignado==='EN ALMACEN') badge = `<span class="badge-almacen px-2 py-1 rounded text-xs font-bold">STOCK ALMACÉN (SpaceCom)</span>`;
+                else if(eq.tecnico_asignado) badge = `<span class="badge-tecnico px-2 py-1 rounded text-xs font-bold">TÉCNICO: ${eq.tecnico_asignado}</span>`;
+
+                tbody.innerHTML += `<tr class="border-b"><td class="p-2 font-mono">${eq.sku||'-'}</td><td class="p-2 text-xs">${eq.modelo||'-'}</td><td class="p-2 font-mono font-bold">${eq.serie}</td><td class="p-2">${badge}</td><td class="p-2 text-center font-bold">${eq.dias_antiguedad||0}</td></tr>`;
             });
         }
 
-        async function cargarWhatsApp(tipoFlujo, contenedorId) {
-            const contenedor = document.getElementById(contenedorId);
-            const sedeActual = document.getElementById('sede_selector').value.toUpperCase();
-            contenedor.innerHTML = '<p class="text-blue-500 font-bold col-span-2 text-center">Generando tarjetas...</p>';
-
-            const { data } = await db.from('cruce_spacecom').select('*').eq('tipo_flujo', tipoFlujo).ilike('ciudad', sedeActual).not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '').or('sot_instalacion.is.null,sot_instalacion.eq.');
-            if(!data || data.length === 0) return contenedor.innerHTML = `<p class="text-gray-500 text-center col-span-2">No hay equipos pendientes con técnicos para ${sedeActual}.</p>`;
-
-            const agrupado = {};
-            data.forEach(item => { if(!agrupado[item.tecnico_asignado]) agrupado[item.tecnico_asignado] = []; agrupado[item.tecnico_asignado].push(item); });
-
-            contenedor.innerHTML = '';
-            for (const [tecnico, equipos] of Object.entries(agrupado)) {
-                const cardId = 'wa_' + tipoFlujo + '_' + tecnico.replace(/[^a-zA-Z0-9]/g, '');
-                let htmlEquipos = equipos.map(eq => `<div class="flex justify-between border-b py-1"><span class="font-mono text-sm font-bold text-gray-800">${eq.serie}</span><span class="text-xs text-red-600 font-bold">${eq.dias_antiguedad ? eq.dias_antiguedad + ' Días' : ''}</span></div>`).join('');
-                contenedor.innerHTML += `<div class="bg-white rounded-lg shadow-md border overflow-hidden flex flex-col"><div id="${cardId}" class="p-4 bg-white"><div class="bg-blue-900 text-white p-3 rounded text-center mb-3"><h3 class="font-bold uppercase">${tecnico}</h3><p class="text-xs text-blue-200">Equipos: ${equipos.length}</p></div><div class="space-y-1 mb-2 max-h-40 overflow-y-auto">${htmlEquipos}</div><p class="text-center text-xs font-bold text-gray-500 mt-2 border-t pt-2 uppercase">Devolución Obligatoria</p></div><div class="bg-gray-50 p-3 border-t"><button onclick="copiarComoImagen('${cardId}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow cursor-pointer">📸 Copiar para WhatsApp</button></div></div>`;
-            }
+        function exportarExcelRadar() {
+            if(datosRadarCache.length===0) return;
+            const ws = XLSX.utils.json_to_sheet(datosRadarCache.map(e => ({SKU: e.sku, MODELO: e.modelo, SERIE: e.serie, TECNICO: e.tecnico_asignado, SOT: e.sot_instalacion, DIAS: e.dias_antiguedad})));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+            XLSX.writeFile(wb, `Reporte_Radar.xlsx`);
         }
-        async function copiarComoImagen(elementId) {
-            try { const canvas = await html2canvas(document.getElementById(elementId), { scale: 2 }); canvas.toBlob(async (blob) => { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); alert("¡Imagen copiada para WhatsApp!"); }); } catch (err) {}
+
+        // ==========================================
+        // REPORTE TÉCNICOS WSP
+        // ==========================================
+        let mapaTecnicos = {}; let tecActual = '';
+        async function cargarReporteTecnicos() {
+            const sede = document.getElementById('sede_selector').value;
+            const { data } = await db.from('cruce_spacecom').select('*').eq('tipo_flujo', 'ANTIGUAMIENTO').ilike('ciudad', sede).not('tecnico_asignado', 'is', null).neq('tecnico_asignado', '').neq('tecnico_asignado', 'EN ALMACEN').or('sot_instalacion.is.null,sot_instalacion.eq.');
+            if(!data) return;
+            mapaTecnicos = {};
+            data.forEach(eq => { if(!mapaTecnicos[eq.tecnico_asignado]) mapaTecnicos[eq.tecnico_asignado]=[]; mapaTecnicos[eq.tecnico_asignado].push(eq); });
+            const ul = document.getElementById('lista_tecnicos_pendientes'); ul.innerHTML='';
+            Object.keys(mapaTecnicos).forEach(t => { ul.innerHTML+=`<li onclick="selectTec('${t}')" class="p-3 border-b hover:bg-slate-200 cursor-pointer text-xs font-bold flex justify-between"><span>${t}</span><span class="text-rose-600">${mapaTecnicos[t].length}</span></li>`; });
+        }
+        function selectTec(t) {
+            tecActual = t; document.getElementById('panel_vacio_tecnico').classList.add('hidden'); document.getElementById('panel_detalle_tecnico').classList.remove('hidden');
+            document.getElementById('detalle_nombre_tecnico').innerText = t; document.getElementById('tarjeta_titulo_tecnico').innerText = t; document.getElementById('detalle_conteo_equipos').innerText = mapaTecnicos[t].length + " eq";
+            document.getElementById('tarjeta_tbody_equipos').innerHTML = mapaTecnicos[t].map(eq => `<tr><td class="p-1 font-mono">${eq.sku||'-'}</td><td class="p-1">${eq.modelo||'-'}</td><td class="p-1 font-mono font-bold">${eq.serie}</td><td class="p-1 text-right text-rose-600 font-bold">${eq.dias_antiguedad}</td></tr>`).join('');
+        }
+        function copiarTextoWhatsApp() {
+            if(!tecActual) return;
+            let txt = `*DEVOLUCIÓN OBLIGATORIA*\n👷 *Técnico:* ${tecActual}\n📦 *Equipos:* ${mapaTecnicos[tecActual].length}\n\n`;
+            mapaTecnicos[tecActual].forEach(eq => txt+= `• \`${eq.serie}\` | ${eq.sku} | ${eq.dias_antiguedad}d\n`);
+            navigator.clipboard.writeText(txt).then(() => alert("Copiado al portapapeles."));
+        }
+        async function copiarImagenWhatsApp() {
+            try { const c = await html2canvas(document.getElementById('tarjeta_whatsapp_captura'), {scale: 2}); c.toBlob(b => navigator.clipboard.write([new ClipboardItem({'image/png': b})]).then(()=>alert("Imagen copiada."))); } catch(e){}
+        }
+
+        // ==========================================
+        // HISTORIAL DE CAJAS
+        // ==========================================
+        async function cargarHistorialCajas() {
+            const sede = document.getElementById('sede_selector').value;
+            const { data } = await db.from('equipos_escaneados').select('*').ilike('sede', sede).order('created_at', { ascending: false });
+            if(!data) return;
+            const cMap = {}; data.forEach(i => { if(i.caja) { if(!cMap[i.caja]) cMap[i.caja]=[]; cMap[i.caja].push(i.serie); } });
+            const tbody = document.getElementById('tbody_cajas'); tbody.innerHTML='';
+            Object.keys(cMap).forEach(c => {
+                tbody.innerHTML += `<tr><td class="p-3 font-mono font-bold">${c}</td><td class="p-3">${sede}</td><td class="p-3 font-bold">${cMap[c].length} eq</td><td class="p-3 text-center"><button onclick='abrirEtiqueta("${c}", ${JSON.stringify(cMap[c])})' class="bg-slate-800 text-white px-3 py-1 rounded text-xs">Imprimir</button></td></tr>`;
+            });
+        }
+        function abrirEtiqueta(nombre, series) {
+            document.getElementById('modal_titulo_caja').innerText = `Caja: ${nombre}`;
+            document.getElementById('modal_contenido_series').innerHTML = series.map((s,i) => `<div class="flex justify-between border-b py-1"><span class="text-slate-400">#${i+1}</span><span class="font-bold">${s}</span></div>`).join('');
+            document.getElementById('modal_etiqueta').classList.remove('hidden');
         }
     </script>
 </body>
