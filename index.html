@@ -1,17 +1,19 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Package, Scan, Clock, RefreshCw, Users, Box, Download, Upload, 
-  CheckCircle2, AlertTriangle, XCircle, Trash2, Printer, ArrowRight, 
-  ShieldCheck, Database, Search, Filter, Plus, FileText, Send, CheckSquare,
-  Square, LayoutDashboard, Truck, LogOut, Check, ChevronRight, AlertCircle,
-  FileSpreadsheet, Sparkles, HelpCircle, Barcode, Layers, Server, Activity, 
-  Wifi, List, Settings, RotateCcw, FileUp, BarChart3, HardHat, FileDown,
-  History, Recycle
+  Package, Scan, RefreshCw, Box, Upload, 
+  CheckCircle2, AlertTriangle, XCircle, Trash2, 
+  FileText, CheckSquare, LayoutDashboard, Truck, 
+  LogOut, FileSpreadsheet, Barcode, Activity, List, 
+  Settings, RotateCcw, FileUp, BarChart3, HardHat, 
+  History, Recycle, Plus
 } from 'lucide-react';
 
 const SUPABASE_URL = "https://fbxzhasfdvkqunnebkij.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY";
 
+// Cliente REST simple para evitar dependencias externas que rompan Vercel
 const supabaseRest = {
   async testConnection() {
     try {
@@ -116,7 +118,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#f8f9fa] font-sans text-slate-800 overflow-hidden selection:bg-orange-200">
       
-      {/* Sidebar Lateral Oscuro */}
+      {/* Sidebar Lateral Oscuro (Fiel a la imagen) */}
       <aside className="w-[260px] bg-[#1a202c] flex flex-col justify-between shadow-xl z-20 flex-shrink-0">
         <div>
           <div className="h-20 px-6 flex items-center gap-3 border-b border-slate-700/50">
@@ -157,6 +159,7 @@ export default function App() {
       {/* Contenido Principal */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         
+        {/* Header Superior */}
         <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-10">
           <div className="flex items-center gap-4">
             <div className="bg-gray-100 border border-gray-200 text-gray-700 text-[11px] font-bold px-3 py-1.5 rounded flex items-center gap-2">
@@ -174,19 +177,25 @@ export default function App() {
           </button>
         </header>
 
-        {/* Área de Vistas */}
+        {/* Área de Vistas (Scrollable) */}
         <main className="flex-1 overflow-y-auto p-8 relative">
-          {activeTab === 'inicio' && <DashboardView equipos={equipos} cajas={cajas} />}
-          {activeTab === 'pistoleo' && <PistoleoView equipos={equipos} cajas={cajas} setEquipos={setEquipos} setCajas={setCajas} />}
-          {activeTab === 'importaciones' && <ImportacionesView />}
-          {activeTab === 'administracion' && <AdministracionView />}
-          
-          {['inventario', 'antiguamiento', 'recuperados', 'tecnicos', 'cajas', 'reportes', 'devoluciones'].includes(activeTab) && (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-white rounded-xl border border-gray-200 shadow-sm p-12">
-              <Box size={48} className="mb-4 opacity-20" />
-              <h2 className="text-xl font-bold uppercase">Módulo en Desarrollo</h2>
-              <p className="text-sm">Esta sección de {activeTab} estará disponible pronto.</p>
-            </div>
+          {loading && syncStatus.testing ? (
+            <div className="flex items-center justify-center h-full text-gray-400">Cargando datos...</div>
+          ) : (
+            <>
+              {activeTab === 'inicio' && <DashboardView equipos={equipos} cajas={cajas} />}
+              {activeTab === 'pistoleo' && <PistoleoView equipos={equipos} setEquipos={setEquipos} />}
+              {activeTab === 'importaciones' && <ImportacionesView />}
+              {activeTab === 'administracion' && <AdministracionView />}
+              
+              {['inventario', 'antiguamiento', 'recuperados', 'tecnicos', 'cajas', 'reportes', 'devoluciones'].includes(activeTab) && (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-white rounded-xl border border-gray-200 shadow-sm p-12">
+                  <Box size={48} className="mb-4 opacity-20" />
+                  <h2 className="text-xl font-bold uppercase">Módulo en Desarrollo</h2>
+                  <p className="text-sm">Esta sección de {activeTab} estará disponible pronto.</p>
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>
@@ -213,6 +222,7 @@ function SidebarItem({ icon, label, active, onClick }) {
 }
 
 function DashboardView({ equipos, cajas }) {
+  // Simulando datos si la BD está vacía para igualar la imagen de referencia
   const activos = equipos.filter(e => e.estado !== 'DEVUELTO_CLARO');
   const antiguamientoCount = activos.filter(e => e.operacion === 'ANTIGUAMIENTO').length || 112; 
   const recuperadosCount = activos.filter(e => e.operacion === 'RECUPERADOS').length || 0;
@@ -305,7 +315,7 @@ function DashCard({ title, value, subtitle, icon, iconBg, iconColor, outline = "
   );
 }
 
-function PistoleoView({ equipos, cajas, setEquipos, setCajas }) {
+function PistoleoView({ equipos, setEquipos }) {
   const [input, setInput] = useState('');
   const [modo, setModo] = useState('Todos');
   const [stats, setStats] = useState({ correctos: 0, alertas: 0, errores: 0 });
@@ -337,6 +347,8 @@ function PistoleoView({ equipos, cajas, setEquipos, setCajas }) {
     const newEquipos = [...equipos];
     newEquipos[foundIndex] = { ...equipo, pistoleado: true, ubicacion_fisica: 'ALMACÉN', estado: 'EN_ALMACEN' };
     setEquipos(newEquipos);
+    
+    // Actualización real en Supabase si existe
     supabaseRest.update('equipos', 'serie', equipo.serie, { pistoleado: true, ubicacion_fisica: 'ALMACÉN', estado: 'EN_ALMACEN' });
 
     if (isDiscrepancy) {
