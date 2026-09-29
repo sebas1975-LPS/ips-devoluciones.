@@ -5,7 +5,8 @@ import {
   ShieldCheck, Database, Search, Filter, Plus, FileText, Send, CheckSquare,
   Square, LayoutDashboard, Truck, LogOut, Check, ChevronRight, AlertCircle,
   FileSpreadsheet, Sparkles, HelpCircle, Barcode, Layers, Server, Activity, 
-  Wifi, List, Settings, RotateCcw, FileUp, BarChart3, HardHat, FileDown
+  Wifi, List, Settings, RotateCcw, FileUp, BarChart3, HardHat, FileDown,
+  History, Recycle
 } from 'lucide-react';
 
 const SUPABASE_URL = "https://fbxzhasfdvkqunnebkij.supabase.co";
@@ -14,16 +15,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_gRsj9jfPuuEkV7tkDFq5Nw_Rns_bcIY";
 const supabaseRest = {
   async testConnection() {
     try {
-      const start = performance.now();
       const res = await fetch(`${SUPABASE_URL}/rest/v1/equipos?select=id&limit=1`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         }
       });
-      const latency = Math.round(performance.now() - start);
-      
-      if (res.ok) return { ok: true, latency, url: SUPABASE_URL };
+      if (res.ok) return { ok: true, url: SUPABASE_URL };
       return { ok: false, error: res.statusText, url: SUPABASE_URL };
     } catch (err) {
       return { ok: false, error: err.message, url: SUPABASE_URL };
@@ -38,25 +36,6 @@ const supabaseRest = {
         }
       });
       if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
-      const data = await res.json();
-      return { data, error: null };
-    } catch (err) {
-      return { data: null, error: err.message };
-    }
-  },
-  async insert(table, record) {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(record)
-      });
-      if (!res.ok) throw new Error(`Insert failed: ${res.status}`);
       const data = await res.json();
       return { data, error: null };
     } catch (err) {
@@ -93,12 +72,12 @@ const playBeep = (type = 'success') => {
     gain.connect(ctx.destination);
     
     if (type === 'success') {
-      osc.frequency.setValueAtTime(880, ctx.currentTime); // Tono alto y rápido
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
       gain.gain.setValueAtTime(0.1, ctx.currentTime);
       osc.start();
       osc.stop(ctx.currentTime + 0.1);
     } else if (type === 'error') {
-      osc.frequency.setValueAtTime(300, ctx.currentTime); // Tono bajo
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
       gain.gain.setValueAtTime(0.2, ctx.currentTime);
       osc.start();
       osc.stop(ctx.currentTime + 0.3);
@@ -112,14 +91,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('inicio');
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState({ ok: false, testing: true });
-  
-  // Estados Globales (Sincronizados con Supabase)
   const [equipos, setEquipos] = useState([]);
   const [cajas, setCajas] = useState([]);
 
   useEffect(() => {
     fetchData();
-    // Intervalo de polling simple para simular sincronización en tiempo real
     const interval = setInterval(fetchData, 15000); 
     return () => clearInterval(interval);
   }, []);
@@ -138,12 +114,11 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#f4f7f6] font-sans text-slate-800 overflow-hidden selection:bg-orange-200">
+    <div className="flex h-screen bg-[#f8f9fa] font-sans text-slate-800 overflow-hidden selection:bg-orange-200">
       
       {/* Sidebar Lateral Oscuro */}
-      <aside className="w-[260px] bg-[#1a202c] flex flex-col justify-between shadow-2xl z-20 flex-shrink-0">
+      <aside className="w-[260px] bg-[#1a202c] flex flex-col justify-between shadow-xl z-20 flex-shrink-0">
         <div>
-          {/* Logo Area */}
           <div className="h-20 px-6 flex items-center gap-3 border-b border-slate-700/50">
             <div className="bg-orange-500 p-2 rounded-lg shadow-lg shadow-orange-500/20">
               <Box className="w-6 h-6 text-white" />
@@ -158,13 +133,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* Menú de Navegación */}
           <nav className="mt-6 px-3 space-y-1">
             <SidebarItem icon={<LayoutDashboard size={18} />} label="Inicio" active={activeTab === 'inicio'} onClick={() => setActiveTab('inicio')} />
             <SidebarItem icon={<Scan size={18} />} label="Pistoleo" active={activeTab === 'pistoleo'} onClick={() => setActiveTab('pistoleo')} />
             <SidebarItem icon={<List size={18} />} label="Inventario" active={activeTab === 'inventario'} onClick={() => setActiveTab('inventario')} />
-            <SidebarItem icon={<Clock size={18} />} label="Antiguamiento" active={activeTab === 'antiguamiento'} onClick={() => setActiveTab('antiguamiento')} />
-            <SidebarItem icon={<RotateCcw size={18} />} label="Recuperados" active={activeTab === 'recuperados'} onClick={() => setActiveTab('recuperados')} />
+            <SidebarItem icon={<History size={18} />} label="Antiguamiento" active={activeTab === 'antiguamiento'} onClick={() => setActiveTab('antiguamiento')} />
+            <SidebarItem icon={<Recycle size={18} />} label="Recuperados" active={activeTab === 'recuperados'} onClick={() => setActiveTab('recuperados')} />
             <SidebarItem icon={<HardHat size={18} />} label="Técnicos" active={activeTab === 'tecnicos'} onClick={() => setActiveTab('tecnicos')} />
             <SidebarItem icon={<Package size={18} />} label="Cajas" active={activeTab === 'cajas'} onClick={() => setActiveTab('cajas')} />
             <SidebarItem icon={<FileUp size={18} />} label="Importaciones" active={activeTab === 'importaciones'} onClick={() => setActiveTab('importaciones')} />
@@ -174,7 +148,6 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Perfil Inferior */}
         <div className="p-5 border-t border-slate-700/50 bg-[#161b22]">
           <p className="text-white font-bold text-sm">Jorge Medina</p>
           <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">ADMINISTRADOR · ARE</p>
@@ -184,17 +157,15 @@ export default function App() {
       {/* Contenido Principal */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         
-        {/* Barra Superior */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-10 shadow-sm">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-10">
           <div className="flex items-center gap-4">
             <div className="bg-gray-100 border border-gray-200 text-gray-700 text-[11px] font-bold px-3 py-1.5 rounded flex items-center gap-2">
               SEDE <span className="text-gray-900">ARE</span>
             </div>
             
-            {/* Indicador de Conexión a Supabase */}
-            <div className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-full ${syncStatus.ok ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${syncStatus.ok ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-              {syncStatus.ok ? 'Supabase Sincronizado' : 'Sin conexión DB'}
+            <div className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-full ${syncStatus.ok ? 'text-emerald-600' : 'text-red-600'}`}>
+              <div className={`w-2 h-2 rounded-full ${syncStatus.ok ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+              {syncStatus.ok ? 'Sincronizado' : 'Sin conexión a Supabase'}
             </div>
           </div>
           
@@ -203,16 +174,15 @@ export default function App() {
           </button>
         </header>
 
-        {/* Área de Vistas (Scrollable) */}
+        {/* Área de Vistas */}
         <main className="flex-1 overflow-y-auto p-8 relative">
           {activeTab === 'inicio' && <DashboardView equipos={equipos} cajas={cajas} />}
           {activeTab === 'pistoleo' && <PistoleoView equipos={equipos} cajas={cajas} setEquipos={setEquipos} setCajas={setCajas} />}
           {activeTab === 'importaciones' && <ImportacionesView />}
           {activeTab === 'administracion' && <AdministracionView />}
           
-          {/* Placeholder para otras vistas */}
           {['inventario', 'antiguamiento', 'recuperados', 'tecnicos', 'cajas', 'reportes', 'devoluciones'].includes(activeTab) && (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-white rounded-xl border border-gray-200 shadow-sm p-12">
               <Box size={48} className="mb-4 opacity-20" />
               <h2 className="text-xl font-bold uppercase">Módulo en Desarrollo</h2>
               <p className="text-sm">Esta sección de {activeTab} estará disponible pronto.</p>
@@ -243,9 +213,8 @@ function SidebarItem({ icon, label, active, onClick }) {
 }
 
 function DashboardView({ equipos, cajas }) {
-  // Cálculos reales basados en Supabase
   const activos = equipos.filter(e => e.estado !== 'DEVUELTO_CLARO');
-  const antiguamientoCount = activos.filter(e => e.operacion === 'ANTIGUAMIENTO').length || 112; // Fallback visual a la imagen si no hay datos
+  const antiguamientoCount = activos.filter(e => e.operacion === 'ANTIGUAMIENTO').length || 112; 
   const recuperadosCount = activos.filter(e => e.operacion === 'RECUPERADOS').length || 0;
   const enAlmacen = activos.filter(e => e.pistoleado && e.ubicacion_fisica === 'ALMACÉN').length || 16;
   const pendientes = activos.filter(e => !e.pistoleado).length || 96;
@@ -255,17 +224,17 @@ function DashboardView({ equipos, cajas }) {
   return (
     <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="mb-8">
-        <h1 className="text-[28px] font-black text-gray-900 tracking-tight uppercase leading-none mb-2">PANEL OPERATIVO</h1>
+        <h1 className="text-[32px] font-black text-gray-900 tracking-tight uppercase leading-none mb-2">PANEL OPERATIVO</h1>
         <p className="text-gray-500 text-sm">Sede ARE · AREQUIPA</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-        <DashCard title="ANTIGUAMIENTO" value={antiguamientoCount} subtitle="Series cargadas" icon={<Clock size={20}/>} iconBg="bg-orange-100" iconColor="text-orange-600" />
-        <DashCard title="RECUPERADOS" value={recuperadosCount} subtitle="Series cargadas" icon={<RotateCcw size={20}/>} iconBg="bg-orange-100" iconColor="text-orange-600" />
-        <DashCard title="EN ALMACÉN" value={enAlmacen} subtitle="Confirmados por pistoleo" icon={<CheckSquare size={20}/>} iconBg="bg-emerald-100" iconColor="text-emerald-600" />
-        <DashCard title="PENDIENTES" value={pendientes} subtitle="Aún no encontrados" icon={<Scan size={20}/>} iconBg="bg-amber-100" iconColor="text-amber-600" />
-        <DashCard title="DISCREPANCIAS" value={discrepancias} subtitle="Reportado ≠ físico" icon={<AlertTriangle size={20}/>} iconBg="bg-red-100" iconColor="text-red-600" />
-        <DashCard title="CAJAS ABIERTAS" value={cajasAbiertas} subtitle="Con espacio disponible" icon={<Box size={20}/>} iconBg="bg-orange-100" iconColor="text-orange-700" />
+        <DashCard title="ANTIGUAMIENTO" value={antiguamientoCount} subtitle="Series cargadas" icon={<History size={18}/>} iconBg="bg-orange-100" iconColor="text-orange-700" />
+        <DashCard title="RECUPERADOS" value={recuperadosCount} subtitle="Series cargadas" icon={<Recycle size={18}/>} iconBg="bg-orange-100" iconColor="text-orange-700" />
+        <DashCard title="EN ALMACÉN" value={enAlmacen} subtitle="Confirmados por pistoleo" icon={<CheckSquare size={18}/>} iconBg="bg-emerald-100" iconColor="text-emerald-700" />
+        <DashCard title="PENDIENTES" value={pendientes} subtitle="Aún no encontrados" icon={<RefreshCw size={18}/>} iconBg="bg-amber-100" iconColor="text-amber-700" />
+        <DashCard title="DISCREPANCIAS" value={discrepancias} subtitle="Reportado ≠ físico" icon={<AlertTriangle size={18}/>} iconBg="bg-red-100" iconColor="text-red-700" outline="border-red-100" />
+        <DashCard title="CAJAS ABIERTAS" value={cajasAbiertas} subtitle="Con espacio disponible" icon={<Box size={18}/>} iconBg="bg-orange-100" iconColor="text-orange-800" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -274,7 +243,7 @@ function DashboardView({ equipos, cajas }) {
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">RESUMEN POR SEDE</h3>
           </div>
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] text-gray-400 uppercase bg-gray-50/50">
+            <thead className="text-[11px] text-gray-400 uppercase bg-gray-50">
               <tr>
                 <th className="px-6 py-3 font-semibold">SEDE</th>
                 <th className="px-6 py-3 font-semibold text-center">ALMACÉN</th>
@@ -284,17 +253,444 @@ function DashboardView({ equipos, cajas }) {
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <tr className="border-b border-gray-50">
                 <td className="px-6 py-4 flex items-center gap-2 font-medium">
                   <span className="text-orange-500">ARE</span> <span className="text-gray-600">AREQUIPA</span>
                 </td>
-                <td className="px-6 py-4 text-center text-gray-600 font-medium">16</td>
-                <td className="px-6 py-4 text-center text-gray-600 font-medium">0</td>
+                <td className="px-6 py-4 text-center text-gray-700">16</td>
+                <td className="px-6 py-4 text-center text-gray-700">0</td>
                 <td className="px-6 py-4 text-center text-red-500 font-bold">14</td>
-                <td className="px-6 py-4 text-center text-gray-600 font-medium">8</td>
+                <td className="px-6 py-4 text-center text-gray-700">8</td>
               </tr>
-              <tr className="hover:bg-gray-50 transition-colors">
+              <tr>
                 <td className="px-6 py-4 flex items-center gap-2 font-medium">
                   <span className="text-orange-500">CUS</span> <span className="text-gray-600">CUSCO</span>
                 </td>
-                <td className="px-6 py-4 text-center text-gray-600 font-medium">0</td>
+                <td className="px-6 py-4 text-center text-gray-700">0</td>
+                <td className="px-6 py-4 text-center text-gray-700">96</td>
+                <td className="px-6 py-4 text-center text-gray-700">0</td>
+                <td className="px-6 py-4 text-center text-gray-700">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-2 text-gray-500 mb-4">
+            <RotateCcw size={16} />
+            <h3 className="text-xs font-bold uppercase tracking-widest">DEVUELTOS A CLARO</h3>
+          </div>
+          <div className="text-5xl font-black text-gray-900 mb-2">0</div>
+          <p className="text-sm text-gray-500">Fuera del inventario activo</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashCard({ title, value, subtitle, icon, iconBg, iconColor, outline = "border-gray-200" }) {
+  return (
+    <div className={`bg-white rounded-xl border ${outline} shadow-sm p-6 flex flex-col relative overflow-hidden group transition-all`}>
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{title}</h3>
+        <div className={`p-1.5 rounded-lg ${iconBg} ${iconColor}`}>
+          {icon}
+        </div>
+      </div>
+      <div className="mt-auto">
+        <div className="text-4xl font-black text-gray-900 mb-1 tracking-tight">{value}</div>
+        <div className="text-xs text-gray-500 font-medium">{subtitle}</div>
+      </div>
+    </div>
+  );
+}
+
+function PistoleoView({ equipos, cajas, setEquipos, setCajas }) {
+  const [input, setInput] = useState('');
+  const [modo, setModo] = useState('Todos');
+  const [stats, setStats] = useState({ correctos: 0, alertas: 0, errores: 0 });
+  const [ultimos, setUltimos] = useState([]);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus();
+  }, []);
+
+  const handleScan = async (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    const query = input.trim().toUpperCase();
+    setInput('');
+
+    const foundIndex = equipos.findIndex(eq => eq.serie.toUpperCase() === query);
+    
+    if (foundIndex === -1) {
+      playBeep('error');
+      setStats(s => ({ ...s, errores: s.errores + 1 }));
+      setUltimos(prev => [{ serie: query, status: 'error', msg: 'Serie no encontrada en el sistema' }, ...prev].slice(0, 5));
+      return;
+    }
+
+    const equipo = equipos[foundIndex];
+    let isDiscrepancy = equipo.ubicacion_reportada && equipo.ubicacion_reportada !== 'ALMACÉN';
+
+    const newEquipos = [...equipos];
+    newEquipos[foundIndex] = { ...equipo, pistoleado: true, ubicacion_fisica: 'ALMACÉN', estado: 'EN_ALMACEN' };
+    setEquipos(newEquipos);
+    supabaseRest.update('equipos', 'serie', equipo.serie, { pistoleado: true, ubicacion_fisica: 'ALMACÉN', estado: 'EN_ALMACEN' });
+
+    if (isDiscrepancy) {
+      playBeep('success'); 
+      setStats(s => ({ ...s, alertas: s.alertas + 1 }));
+      setUltimos(prev => [{ serie: query, status: 'alert', msg: `Discrepancia: Reportado en ${equipo.ubicacion_reportada}` }, ...prev].slice(0, 5));
+    } else {
+      playBeep('success');
+      setStats(s => ({ ...s, correctos: s.correctos + 1 }));
+      setUltimos(prev => [{ serie: query, status: 'success', msg: 'Registrado en almacén correctamente' }, ...prev].slice(0, 5));
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h1 className="text-[32px] font-black text-gray-900 tracking-tight uppercase leading-none mb-2">PISTOLEO</h1>
+          <p className="text-gray-500 text-sm">Escanea cada serie con el lector. El resultado aparece al instante.</p>
+        </div>
+        <div className="flex items-center gap-2 text-sm font-bold text-gray-700 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+          <Activity size={18} className="text-gray-400" />
+          Sonido activado
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6 flex-1">
+        
+        <div className="flex-1 flex flex-col gap-6">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-gray-500">Validar contra:</span>
+            <div className="flex bg-white rounded-md border border-gray-200 p-1 shadow-sm">
+              {['Todos', 'Antiguamiento', 'Recuperados'].map(t => (
+                <button 
+                  key={t}
+                  onClick={() => setModo(t)}
+                  className={`px-4 py-1.5 text-sm font-bold rounded ${modo === t ? 'bg-orange-500 text-white shadow' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={handleScan} className="relative">
+            <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+              <Barcode className="w-8 h-8 text-gray-400" />
+            </div>
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Escanea la serie..."
+              className="w-full bg-white border-2 border-orange-400 rounded-xl py-6 pl-20 pr-6 text-2xl font-mono text-gray-700 shadow-sm focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-gray-400"
+              autoFocus
+            />
+          </form>
+
+          <div className="flex-1 bg-white/40 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center min-h-[200px]">
+             {ultimos.length === 0 ? (
+                <div className="text-center text-gray-400 font-bold tracking-widest text-xl uppercase opacity-50">
+                  ESPERANDO ESCANEO...
+                </div>
+             ) : (
+                <div className="w-full h-full p-6 flex flex-col gap-4">
+                   {ultimos.map((u, i) => (
+                     <div key={i} className={`p-4 rounded-lg flex items-center gap-4 border shadow-sm animate-in fade-in slide-in-from-left-4 ${
+                       u.status === 'success' ? 'bg-emerald-50/50 border-emerald-200' :
+                       u.status === 'alert' ? 'bg-amber-50/50 border-amber-200' :
+                       'bg-red-50/50 border-red-200'
+                     }`}>
+                       {u.status === 'success' && <CheckCircle2 className="text-emerald-500 w-8 h-8 flex-shrink-0" />}
+                       {u.status === 'alert' && <AlertTriangle className="text-amber-500 w-8 h-8 flex-shrink-0" />}
+                       {u.status === 'error' && <XCircle className="text-red-500 w-8 h-8 flex-shrink-0" />}
+                       <div>
+                         <div className="font-mono text-xl font-bold text-gray-800 tracking-tight">{u.serie}</div>
+                         <div className={`text-sm font-medium ${u.status === 'success' ? 'text-emerald-700' : u.status === 'alert' ? 'text-amber-700' : 'text-red-700'}`}>{u.msg}</div>
+                       </div>
+                     </div>
+                   ))}
+                </div>
+             )}
+          </div>
+        </div>
+
+        <div className="w-full lg:w-80 flex flex-col gap-6">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col items-center justify-center shadow-sm">
+              <span className="text-3xl font-black text-emerald-500">{stats.correctos}</span>
+              <span className="text-[9px] font-bold text-gray-500 uppercase mt-1">CORRECTOS</span>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col items-center justify-center shadow-sm">
+              <span className="text-3xl font-black text-amber-500">{stats.alertas}</span>
+              <span className="text-[9px] font-bold text-gray-500 uppercase mt-1">ALERTAS</span>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col items-center justify-center shadow-sm">
+              <span className="text-3xl font-black text-red-500">{stats.errores}</span>
+              <span className="text-[9px] font-bold text-gray-500 uppercase mt-1">ERRORES</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex-1 flex flex-col overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">ÚLTIMOS ESCANEOS</h3>
+            </div>
+            <div className="p-6 flex-1 flex flex-col items-center justify-center text-center text-gray-400">
+              <Scan size={32} className="mb-3 opacity-50" />
+              <p className="font-bold text-gray-600 mb-1">Listo para escanear</p>
+              <p className="text-xs">Los escaneos de esta sesión aparecerán aquí.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImportacionesView() {
+  return (
+    <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+      <div className="mb-8">
+        <h1 className="text-[32px] font-black text-gray-900 tracking-tight uppercase leading-none mb-2">IMPORTACIONES</h1>
+        <p className="text-gray-500 text-sm">Carga, valida y cruza archivos Excel</p>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex-1 space-y-10">
+          
+          <section>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-6 h-6 rounded bg-orange-500 text-white font-bold flex items-center justify-center text-sm shadow">1</div>
+              <h2 className="text-lg font-black uppercase text-gray-900 tracking-tight">TIPO DE ARCHIVO</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <ImportTypeCard icon={<History/>} title="Antiguamiento" desc="Archivo de Claro con equipos a devolver (columnas A-P)." extra="Hoja sugerida: Hoja1" active />
+              <ImportTypeCard icon={<Recycle/>} title="Recuperados" desc="Archivo de Claro con equipos recuperados de técnicos." extra="Hoja sugerida: Hoja1" />
+              <ImportTypeCard icon={<Settings/>} title="Ubicación SpaceCom" desc="Reporte de stock de SpaceCom: dónde está cada serie (almacén o técnico)." extra="Hoja sugerida: Stock Detalle" />
+              <ImportTypeCard icon={<FileText/>} title="SOT / Liquidación" desc="Liquidaciones de SpaceCom con N° OT y Serie: series ya instaladas." extra="Hoja sugerida: Liquidaciones" />
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-6 h-6 rounded bg-orange-500 text-white font-bold flex items-center justify-center text-sm shadow">2</div>
+              <h2 className="text-lg font-black uppercase text-gray-900 tracking-tight">SELECCIONAR EXCEL</h2>
+            </div>
+            <div className="bg-white border border-dashed border-gray-300 rounded-xl p-5 flex items-center justify-between shadow-sm mb-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <FileSpreadsheet className="text-gray-500" size={24} />
+                </div>
+                <div>
+                  <div className="font-bold text-gray-700 text-sm truncate max-w-sm">SETIEMBRE FINAL LICENCIAS PROYECTOS Y SEGURIDAD Y SAL... (003).xlsx</div>
+                  <div className="text-xs text-gray-400 font-medium">Formato .xlsx</div>
+                </div>
+              </div>
+              <button className="px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg transition-colors shadow flex items-center gap-2">
+                <Upload size={16} /> Cambiar
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-500">Hoja:</span>
+              <select className="border border-gray-200 rounded-md text-sm px-3 py-2 bg-white text-gray-700 outline-none focus:border-orange-500 shadow-sm min-w-[150px]">
+                <option>Hoja1</option>
+              </select>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-6 h-6 rounded bg-orange-500 text-white font-bold flex items-center justify-center text-sm shadow">3</div>
+              <h2 className="text-lg font-black uppercase text-gray-900 tracking-tight">VALIDACIÓN Y VISTA PREVIA</h2>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-6 flex items-center gap-4">
+                <CheckCircle2 className="text-emerald-500" size={32} />
+                <div>
+                  <div className="text-3xl font-black text-gray-900 leading-none mb-1">112</div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">FILAS CORRECTAS</div>
+                </div>
+              </div>
+              <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-6 flex items-center gap-4">
+                <AlertTriangle className="text-amber-500" size={32} />
+                <div>
+                  <div className="text-3xl font-black text-gray-900 leading-none mb-1">0</div>
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">FILAS CON ERRORES (SE OMITIRÁN)</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden text-xs">
+              <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/80 text-gray-500 font-bold uppercase tracking-widest text-[10px]">
+                Vista Previa · Primeras 15 filas
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left whitespace-nowrap">
+                  <thead className="text-gray-400 font-bold border-b border-gray-100">
+                    <tr>
+                      <th className="px-4 py-3">#</th>
+                      <th className="px-4 py-3">CIUDAD</th>
+                      <th className="px-4 py-3">CONTRATA</th>
+                      <th className="px-4 py-3">MATERIAL</th>
+                      <th className="px-4 py-3">DESCRIPCIÓN DEL MATERIAL</th>
+                      <th className="px-4 py-3">NÚMERO DE SERIE</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-600 font-mono text-[11px]">
+                    {[
+                      {i: 2, c: 'AREQUIPA', t: 'LICENCIAS PROYECTOS Y SEGURIDAD Y SAL...', m: '4047000', d: 'TERMINAL GPON HUAWEI HG8247U', s: '485754...'},
+                      {i: 3, c: 'AREQUIPA', t: 'LICENCIAS PROYECTOS Y SEGURIDAD Y SAL...', m: '4047000', d: 'TERMINAL GPON HUAWEI HG8247U', s: '485754...'},
+                      {i: 4, c: 'AREQUIPA', t: 'LICENCIAS PROYECTOS Y SEGURIDAD Y SAL...', m: '4074174', d: 'MODEM INFINITY 601 32X8 3.1 CASTLENET', s: '3NH861...'},
+                      {i: 5, c: 'AREQUIPA', t: 'LICENCIAS PROYECTOS Y SEGURIDAD Y SAL...', m: '4074174', d: 'MODEM INFINITY 601 32X8 3.1 CASTLENET', s: '3NH861...'}
+                    ].map(row => (
+                      <tr key={row.i} className="border-b border-gray-50">
+                        <td className="px-4 py-2.5 text-gray-400 font-sans">{row.i}</td>
+                        <td className="px-4 py-2.5">{row.c}</td>
+                        <td className="px-4 py-2.5">{row.t}</td>
+                        <td className="px-4 py-2.5">{row.m}</td>
+                        <td className="px-4 py-2.5">{row.d}</td>
+                        <td className="px-4 py-2.5 font-bold text-gray-800">{row.s}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-6 h-6 rounded bg-orange-500 text-white font-bold flex items-center justify-center text-sm shadow">4</div>
+              <h2 className="text-lg font-black uppercase text-gray-900 tracking-tight">CONFIRMAR IMPORTACIÓN</h2>
+            </div>
+            <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm flex items-center justify-between">
+              <span className="text-gray-500 text-sm">Se procesarán <strong className="text-gray-900">112</strong> series.</span>
+              <div className="flex gap-3">
+                <button className="px-6 py-2.5 text-gray-600 font-bold hover:bg-gray-100 rounded-lg transition-colors text-sm">Cancelar</button>
+                <button className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg shadow transition-colors text-sm">Confirmar importación</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className="w-full lg:w-[340px] flex-shrink-0">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden sticky top-8">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">IMPORTACIONES RECIENTES</h3>
+            </div>
+            <div className="divide-y divide-gray-100">
+              <HistoryItem title="SOT / Liquidación" date="29 sep 10:50" file="liquidaciones_filtrado_full...xlsx" lines="6,673 filas" />
+              <HistoryItem title="Ubicación SpaceCom" date="29 sep 10:49" file="Stock_General_Detalle...xlsx" lines="3,089 filas · 15 cruzados" />
+              <HistoryItem title="Antiguamiento" date="29 sep 10:48" file="SETIEMBRE FINAL LICENCIAS...xlsx" lines="112 filas · 112 nuevos" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImportTypeCard({ icon, title, desc, extra, active }) {
+  return (
+    <div className={`p-5 rounded-xl border-2 cursor-pointer transition-all ${active ? 'border-orange-400 bg-white shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+      <div className="flex items-center gap-3 mb-2">
+        <div className={`p-2 rounded-lg ${active ? 'bg-orange-50 text-orange-500' : 'bg-gray-50 text-gray-400'}`}>
+          {icon}
+        </div>
+        <h3 className="font-bold text-gray-800 text-sm">{title}</h3>
+      </div>
+      <p className="text-xs text-gray-500 mb-3 leading-relaxed">{desc}</p>
+      <p className="text-[10px] text-gray-400 font-medium">{extra}</p>
+    </div>
+  );
+}
+
+function HistoryItem({ title, date, file, lines }) {
+  return (
+    <div className="p-4 hover:bg-gray-50 cursor-pointer transition-colors">
+      <div className="flex justify-between items-center mb-1">
+        <span className="font-bold text-gray-800 text-sm">{title}</span>
+        <span className="text-[11px] text-gray-400">{date}</span>
+      </div>
+      <div className="text-[11px] text-gray-500 truncate mb-1">{file}</div>
+      <div className="text-[11px] font-bold text-gray-600">{lines}</div>
+    </div>
+  );
+}
+
+function AdministracionView() {
+  return (
+    <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mb-8">
+        <h1 className="text-[32px] font-black text-gray-900 tracking-tight uppercase leading-none mb-2">ADMINISTRACIÓN</h1>
+        <p className="text-gray-500 text-sm">Sedes, usuarios y permisos</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <h2 className="text-xs font-bold text-gray-800 uppercase tracking-widest mb-6">SEDES</h2>
+          
+          <div className="flex gap-3 mb-6">
+            <input type="text" placeholder="LIM" className="w-20 border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-sm" />
+            <input type="text" placeholder="Lima" className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-sm" />
+            <button className="bg-orange-300 hover:bg-orange-400 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1 shadow-sm">
+              <Plus size={16} /> Agregar
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors shadow-sm bg-white">
+              <div className="flex items-center gap-3">
+                <span className="bg-orange-100 text-orange-600 font-bold text-xs px-2 py-1 rounded">ARE</span>
+                <span className="text-gray-700 font-bold text-sm">AREQUIPA</span>
+              </div>
+              <button className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+            </div>
+            <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors shadow-sm bg-white">
+              <div className="flex items-center gap-3">
+                <span className="bg-orange-100 text-orange-600 font-bold text-xs px-2 py-1 rounded">CUS</span>
+                <span className="text-gray-700 font-bold text-sm">CUSCO</span>
+              </div>
+              <button className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={16}/></button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <h2 className="text-xs font-bold text-gray-800 uppercase tracking-widest mb-2">USUARIOS</h2>
+          <p className="text-xs text-gray-500 mb-6">Los usuarios aparecen aquí al ingresar por primera vez. Asígnales rol y sede.</p>
+          
+          <div className="border border-gray-100 rounded-lg p-4 flex flex-col gap-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-gray-800 text-sm">Jorge Medina <span className="text-gray-400 font-normal">(tú)</span></div>
+                <div className="text-xs text-gray-500 mt-0.5">sebas1975.dale@gmail.com</div>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <select className="flex-1 border border-gray-200 rounded-md text-xs px-2 py-2 text-gray-600 bg-gray-50 outline-none focus:border-orange-500 font-medium">
+                <option>Administrador</option>
+                <option>Operador</option>
+              </select>
+              <select className="flex-1 border border-gray-200 rounded-md text-xs px-2 py-2 text-gray-600 bg-gray-50 outline-none focus:border-orange-500 font-medium">
+                <option>ARE · AREQUIPA</option>
+                <option>CUS · CUSCO</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
